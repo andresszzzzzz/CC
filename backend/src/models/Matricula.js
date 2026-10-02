@@ -21,6 +21,22 @@ const matriculaSchema = new mongoose.Schema({
     ref: 'Grupo',
     required: true
   },
+  gradoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Grado'
+  },
+  jornadaId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Jornada'
+  },
+  acudienteId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Usuario'
+  },
+  motivo: {
+    type: String,
+    trim: true
+  },
   tipoMatricula: {
     type: String,
     enum: ['nueva', 'renovacion', 'traslado', 'promovido'],
@@ -35,7 +51,7 @@ const matriculaSchema = new mongoose.Schema({
   },
   estado: {
     type: String,
-    enum: ['activa', 'retirada', 'trasladada', 'graduado'],
+    enum: ['activa', 'retirada', 'trasladada', 'graduado', 'cancelada'],
     default: 'activa'
   },
   promovido: {

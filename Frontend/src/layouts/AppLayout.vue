@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
+import { MENU_SECRETARIA } from '@/config/menuSecretaria'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -101,18 +102,20 @@ const menuRector = [
   }
 ]
 
+// Íconos del menú de Secretaría (los títulos y rutas vienen de config/menuSecretaria.js)
+const ICONOS_SECRETARIA = {
+  institucion: 'home', escudo: 'star', firmas: 'file-text', fotografias: 'eye', 'anio-escolar': 'calendar-check',
+  periodos: 'clock', jornadas: 'clock', ciclos: 'graduation-cap', grados: 'graduation-cap', grupos: 'layers',
+  areas: 'book-open', asignaturas: 'book', asignacion: 'clipboard-list', calificacion: 'bar-chart',
+  estudiantes: 'users', 'estudiantes/ficha': 'id-card', matriculas: 'clipboard-check', acudientes: 'user-plus',
+  docentes: 'users', 'personas-roles': 'users', usuarios: 'id-card', documentos: 'file-text'
+}
 const menuSecretaria = [
   { titulo: 'General', items: [{ label: 'Inicio', icon: 'home', to: '/secretaria/inicio' }] },
-  { titulo: 'Personas', items: [
-    { label: 'Estudiantes', icon: 'users', to: '/secretaria/estudiantes' },
-    { label: 'Docentes', icon: 'users', to: '/secretaria/docentes' },
-    { label: 'Acudientes', icon: 'user-plus', to: '/secretaria/acudientes' },
-    { label: 'Usuarios del Sistema', icon: 'id-card', to: '/secretaria/usuarios' }
-  ] },
-  { titulo: 'Académico', items: [
-    { label: 'Grupos', icon: 'layers', to: '/secretaria/grupos' },
-    { label: 'Áreas', icon: 'book-open', to: '/secretaria/areas' }
-  ] }
+  ...MENU_SECRETARIA.map((g) => ({
+    titulo: g.grupo,
+    items: g.items.map((i) => ({ label: i.titulo, icon: ICONOS_SECRETARIA[i.ruta.replace('/secretaria/', '')] || 'file-text', to: i.ruta }))
+  }))
 ]
 
 const menu = computed(() => {

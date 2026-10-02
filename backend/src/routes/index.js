@@ -23,6 +23,7 @@ router.use('/nucleo', require('./nucleo.routes'));
 router.use('/reportes', require('./reportes.routes'));
 router.use('/documentos', require('./documentos.routes'));
 router.use('/uploads', require('./upload.routes'));
+router.use('/secretaria', require('./secretaria.routes'));
 
 // --- Usuarios ---------------------------------------------------------------
 const usuario = require('../controllers/usuario.controller');

@@ -23,5 +23,11 @@ module.exports = {
   Catalogo: require('./Catalogo'),
   Prematricula: require('./Prematricula'),
   Comunicados: require('./Comunicados'),
-  SolicitudRegistro: require('./SolicitudRegistro')
+  SolicitudRegistro: require('./SolicitudRegistro'),
+  Jornada: require('./Jornada'),
+  Ciclo: require('./Ciclo'),
+  Grado: require('./Grado'),
+  Firma: require('./Firma'),
+  SistemaCalificacion: require('./SistemaCalificacion'),
+  Imagen: require('./Imagen')
 };

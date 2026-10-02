@@ -98,6 +98,12 @@ const usuarioSchema = new mongoose.Schema({
     enum: ROLES,
     required: true
   },
+  // Roles ADICIONALES al principal (tipoPerfil). Una persona = un solo registro.
+  // OJO: los permisos de la API siguen dependiendo de tipoPerfil.
+  roles: {
+    type: [{ type: String, enum: ['estudiante', 'docente', 'acudiente', 'directivo', 'administrativo'] }],
+    default: []
+  },
   // Solo aplica cuando tipoPerfil = 'estudiante'.
   acudientes: [relacionEstudianteSchema],
   // Solo aplica cuando tipoPerfil = 'acudiente'.

@@ -3,7 +3,8 @@ const ESTADOS_ANIO = {
   PREMATRICULA: 'prematricula',
   MATRICULA: 'matricula',
   ACTIVO: 'activo',
-  FINALIZADO: 'finalizado'
+  FINALIZADO: 'finalizado',
+  INACTIVO: 'inactivo'
 };
 
 // Estados posibles de un período académico

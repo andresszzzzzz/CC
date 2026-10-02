@@ -1,4 +1,5 @@
 const Usuario = require('../models/Usuario');
+const { enriquecerEstudiantes } = require('./secretaria/enriquecer');
 
 // Quien pertenece a un colegio solo puede tocar usuarios de ese mismo colegio.
 const alcance = (req, extra = {}) =>
@@ -45,7 +46,7 @@ const obtenerUsuarios = async (req, res) => {
     ]);
 
     res.status(200).json({
-      usuarios,
+      usuarios: tipoPerfil === 'estudiante' ? await enriquecerEstudiantes(usuarios) : usuarios,
       total,
       pagina: paginaNum,
       totalPaginas: Math.ceil(total / limiteNum)

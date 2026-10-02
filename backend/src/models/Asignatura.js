@@ -23,6 +23,12 @@ const asignaturaSchema = new mongoose.Schema({
     type: Number,
     default: 4
   },
+  porcentaje: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
   orden: {
     type: Number,
     default: 0

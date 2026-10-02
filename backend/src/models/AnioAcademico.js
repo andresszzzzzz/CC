@@ -34,6 +34,16 @@ const periodoSchema = new mongoose.Schema({
   recuperacion: {
     inicio: Date,
     fin: Date
+  },
+  usaEnNotaFinal: {
+    type: Boolean,
+    default: true
+  },
+  porcentaje: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
   }
 }, { _id: true });
 
@@ -51,6 +61,14 @@ const anioAcademicoSchema = new mongoose.Schema({
     type: String,
     enum: Object.values(ESTADOS_ANIO),
     default: 'prematricula'
+  },
+  // Secretaría: fechas del año y si está habilitado para usarse.
+  // El "año actual" sigue siendo el que tiene estado = 'activo' (lo que ya usa el resto del sistema).
+  fechaInicio: Date,
+  fechaFin: Date,
+  habilitado: {
+    type: Boolean,
+    default: true
   },
   cronograma: {
     prematricula: {

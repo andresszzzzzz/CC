@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import DataTable from '@/components/admin/DataTable.vue'
 import FormModal from '@/components/admin/FormModal.vue'
@@ -16,8 +17,13 @@ const props = defineProps({
   incluirInstitucion: { type: Boolean, default: true },
   soloLectura: { type: Boolean, default: false },
   antesDeEnviar: { type: Function, default: null },
-  nombreItem: { type: String, default: 'el registro' }
+  nombreItem: { type: String, default: 'el registro' },
+  // --- Nuevos (opcionales) ---
+  despuesDeGuardar: { type: Function, default: null },   // (registroGuardado, fueEdicion, payload)
+  tituloEliminar: { type: String, default: 'Eliminar registro' },
+  mensajeEliminar: { type: String, default: '¿Seguro que quieres eliminar este registro? Esta acción no se puede deshacer.' }
 })
+const route = useRoute()
 
 const { institucionId } = useContextoInstitucional()
 
@@ -49,7 +55,10 @@ async function cargar() {
   }
 }
 
-onMounted(cargar)
+onMounted(async () => {
+  await cargar()
+  if (route?.query?.nuevo && !props.soloLectura) abrirCrear() // ej. /secretaria/anio-escolar?nuevo=1
+})
 watch(institucionId, cargar)
 
 function abrirCrear() {
@@ -74,15 +83,21 @@ async function guardar(valores) {
     if (props.incluirInstitucion && institucionId.value) payload.institucionId = institucionId.value
     if (props.antesDeEnviar) payload = props.antesDeEnviar(payload, editando.value)
 
-    if (editando.value) {
-      await props.recurso.actualizar(editando.value._id, payload)
+    const fueEdicion = !!editando.value
+    let respuesta
+    if (fueEdicion) {
+      respuesta = await props.recurso.actualizar(editando.value._id, payload)
     } else {
-      await props.recurso.crear(payload)
+      respuesta = await props.recurso.crear(payload)
+    }
+    if (props.despuesDeGuardar) {
+      const guardado = respuesta?.data?._id ? respuesta.data : (respuesta?.data?.item || { ...(editando.value || {}), ...payload })
+      await props.despuesDeGuardar(guardado, fueEdicion, payload)
     }
     modalAbierto.value = false
     await cargar()
   } catch (e) {
-    errorForm.value = e.response?.data?.mensaje || e.response?.data?.error || 'No se pudo guardar el registro.'
+    errorForm.value = e.response?.data?.mensaje || e.response?.data?.error || (!e.response && e.message) || 'No se pudo guardar el registro.'
   } finally {
     guardando.value = false
   }
@@ -148,8 +163,8 @@ const camposActivos = computed(() => props.campos.filter((c) => !(editando.value
     <ConfirmDialog
       v-if="!soloLectura"
       :abierto="confirmAbierto"
-      titulo="Eliminar registro"
-      mensaje="¿Seguro que quieres eliminar este registro? Esta acción no se puede deshacer."
+      :titulo="tituloEliminar"
+      :mensaje="mensajeEliminar"
       :procesando="eliminando"
       @cerrar="confirmAbierto = false"
       @confirmar="confirmarEliminar"

@@ -39,6 +39,14 @@ const institucionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // Campos de Secretaría (información institucional)
+  resolucion: { type: String, trim: true },
+  municipio: { type: String, trim: true },
+  departamento: { type: String, trim: true },
+  sitioWeb: { type: String, trim: true },
+  rectorNombre: { type: String, trim: true },
+  rectorDocumento: { type: String, trim: true },
+  lema: { type: String, trim: true },
   icfes: {
     type: String,
     trim: true

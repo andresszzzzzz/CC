@@ -5,6 +5,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
 import { usuariosApi, gruposApi } from '@/services/secretariaApi'
+import { MENU_SECRETARIA } from '@/config/menuSecretaria'
 
 const auth = useAuthStore()
 const { institucionId, anioActivo, cargarAnios } = useContextoInstitucional()
@@ -96,6 +97,25 @@ watch(institucionId, cargar)
         </div>
       </section>
 
+
+      <section class="cta-anio">
+        <div>
+          <h3>{{ anioActivo ? `Año escolar actual: ${anioActivo.anio}` : 'Aún no hay un año escolar actual' }}</h3>
+          <p>Crea el año, define sus periodos y márcalo como actual para que aparezca en matrículas, notas y boletines.</p>
+        </div>
+        <router-link class="btn-cta" to="/secretaria/anio-escolar?nuevo=1">Crear año escolar</router-link>
+      </section>
+
+      <section v-for="g in MENU_SECRETARIA" :key="g.grupo" class="grupo-menu">
+        <h3>{{ g.grupo }}</h3>
+        <div class="rejilla-menu">
+          <router-link v-for="i in g.items" :key="i.ruta" :to="i.ruta" class="acceso">
+            <span class="acceso-ico">{{ i.icono }}</span>
+            <span><b>{{ i.titulo }}</b><small>{{ i.desc }}</small></span>
+          </router-link>
+        </div>
+      </section>
+
       <div class="tarjeta aviso">
         <AppIcon name="alert-triangle" :size="18" />
         <p>
@@ -139,4 +159,14 @@ watch(institucionId, cargar)
 }
 .aviso { display: flex; gap: 10px; align-items: flex-start; color: #92400e; background: #fffbeb; border-color: #fde68a; }
 .aviso p { font-size: 12.5px; line-height: 1.6; }
+
+.cta-anio { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; background:#eff6ff; border:1px solid #bfdbfe; border-radius:16px; padding:18px 20px; margin-bottom:22px; }
+.cta-anio h3 { font-size:16px; color:#1e3a8a; margin-bottom:3px; } .cta-anio p { font-size:13px; color:#475569; max-width:560px; }
+.btn-cta { background:#2563eb; color:#fff; text-decoration:none; font-weight:700; font-size:14px; padding:11px 20px; border-radius:12px; }
+.btn-cta:hover { background:#1d4ed8; }
+.grupo-menu { margin-bottom:20px; } .grupo-menu h3 { font-size:14px; color:#0f172a; margin-bottom:10px; }
+.rejilla-menu { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+.acceso { display:flex; gap:12px; align-items:center; background:#fff; border:1px solid #f1f5f9; border-radius:14px; padding:12px 14px; text-decoration:none; color:#0f172a; box-shadow:0 4px 16px rgba(0,0,0,.03); }
+.acceso:hover { border-color:#93c5fd; } .acceso:focus-visible { outline:2px solid #3b82f6; }
+.acceso-ico { font-size:22px; } .acceso b { display:block; font-size:13.5px; } .acceso small { color:#64748b; font-size:12px; }
 </style>

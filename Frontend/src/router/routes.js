@@ -42,7 +42,24 @@ const vistasSecretaria = {
   acudientes: () => import('../views/secretaria/Acudientes.vue'),
   usuarios: () => import('../views/secretaria/Usuarios.vue'),
   grupos: () => import('../views/secretaria/Grupos.vue'),
-  areas: () => import('../views/secretaria/Areas.vue')
+  areas: () => import('../views/secretaria/Areas.vue'),
+  // --- Secretaría ampliada ---
+  institucion: () => import('../views/secretaria/InformacionInstitucional.vue'),
+  escudo: () => import('../views/secretaria/Escudo.vue'),
+  firmas: () => import('../views/secretaria/Firmas.vue'),
+  fotografias: () => import('../views/secretaria/Fotografias.vue'),
+  'anio-escolar': () => import('../views/secretaria/AnioEscolar.vue'),
+  periodos: () => import('../views/secretaria/Periodos.vue'),
+  jornadas: () => import('../views/secretaria/Jornadas.vue'),
+  ciclos: () => import('../views/secretaria/Ciclos.vue'),
+  grados: () => import('../views/secretaria/Grados.vue'),
+  asignaturas: () => import('../views/secretaria/Asignaturas.vue'),
+  asignacion: () => import('../views/secretaria/AsignacionAcademica.vue'),
+  calificacion: () => import('../views/secretaria/SistemaCalificacion.vue'),
+  'estudiantes/ficha': () => import('../views/secretaria/EstudianteFicha.vue'),
+  matriculas: () => import('../views/secretaria/Matriculas.vue'),
+  'personas-roles': () => import('../views/secretaria/PersonasRoles.vue'),
+  documentos: () => import('../views/secretaria/Documentos.vue')
 }
 const rutasSecretaria = Object.entries(vistasSecretaria).map(([ruta, component]) => ({
   path: `/secretaria/${ruta}`,
