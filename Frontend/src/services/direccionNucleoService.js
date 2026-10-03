@@ -14,6 +14,33 @@ export default {
     return api.post(`/nucleo/instituciones/${institucionId}/admin`, dataAdmin)
   },
 
+  listarInstituciones() {
+    return api.get('/nucleo/instituciones')
+  },
+  
+  crearInstitucion(data) {
+    return api.post('/nucleo/instituciones', data)
+  },
+
+  // Método para actualizar institución (incluyendo estado Activo/Inactivo)
+  actualizarInstitucion(id, data) {
+    return api.put(`/nucleo/instituciones/${id}`, data)
+  },
+
+  // --- Gestión de Personal de Secretaría ---
+  crearSecretaria(data) {
+    return api.post('/nucleo/secretarias', data)
+  },
+
+  listarSecretarias() {
+    return api.get('/nucleo/secretarias')
+  },
+
+  // Método para actualizar secretaría
+  actualizarSecretaria(id, data) {
+    return api.put(`/nucleo/secretarias/${id}`, data)
+  },
+
   // Registra el colegio y luego su administrador inicial, con los campos que
   // exige el backend (Institucion: nombre + nit obligatorios; Usuario: nombres,
   // apellidos, email y credenciales). Si falla el admin, el colegio ya quedó creado.
