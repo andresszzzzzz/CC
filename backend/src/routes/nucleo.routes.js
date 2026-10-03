@@ -27,4 +27,7 @@ router.get('/estadisticas/:instId', nucleo.estadisticasPorInstitucion);
 router.get('/comparativo', nucleo.comparativo);
 router.get('/reportes/:tipo', nucleo.reportes);
 
+router.put('/instituciones/:id', nucleo.actualizarInstitucion);
+router.put('/secretarias/:id', nucleo.actualizarSecretaria);
+
 module.exports = router;
