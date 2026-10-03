@@ -1,9 +1,10 @@
 const Catalogo = require('../models/Catalogo');
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los catálogos
 const obtenerCatalogos = async (req, res) => {
   try {
-    const catalogos = await Catalogo.find()
+    const catalogos = await Catalogo.find(filtroTenant(req))
       .populate('institucionId')
       .sort({ tipo: 1, orden: 1, nombre: 1 });
 

@@ -102,19 +102,12 @@ const menuRector = [
   }
 ]
 
-// Íconos del menú de Secretaría (los títulos y rutas vienen de config/menuSecretaria.js)
-const ICONOS_SECRETARIA = {
-  institucion: 'home', escudo: 'star', firmas: 'file-text', fotografias: 'eye', 'anio-escolar': 'calendar-check',
-  periodos: 'clock', jornadas: 'clock', ciclos: 'graduation-cap', grados: 'graduation-cap', grupos: 'layers',
-  areas: 'book-open', asignaturas: 'book', asignacion: 'clipboard-list', calificacion: 'bar-chart',
-  estudiantes: 'users', 'estudiantes/ficha': 'id-card', matriculas: 'clipboard-check', acudientes: 'user-plus',
-  docentes: 'users', 'personas-roles': 'users', usuarios: 'id-card', documentos: 'file-text'
-}
+// El menú de Secretaría (títulos, rutas e íconos) viene COMPLETO de config/menuSecretaria.js
 const menuSecretaria = [
   { titulo: 'General', items: [{ label: 'Inicio', icon: 'home', to: '/secretaria/inicio' }] },
   ...MENU_SECRETARIA.map((g) => ({
     titulo: g.grupo,
-    items: g.items.map((i) => ({ label: i.titulo, icon: ICONOS_SECRETARIA[i.ruta.replace('/secretaria/', '')] || 'file-text', to: i.ruta }))
+    items: g.items.map((i) => ({ label: i.titulo, icon: i.icon || 'file-text', to: i.ruta }))
   }))
 ]
 

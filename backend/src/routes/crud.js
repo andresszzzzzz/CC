@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { verificarToken } = require('../middlewares/auth');
 const { permitirRoles } = require('../middlewares/roleAuth');
 
@@ -25,8 +26,12 @@ const handler = (controlador, nombre) => {
 //   (listar, obtener, crear, actualizar, eliminar).
 // opciones.extras(router, guarda): registra rutas específicas (se montan
 //   ANTES de "/:id" para que Express no las confunda con un id).
+// opciones.modelo: modelo de Mongoose con campo institucionId. Si se indica,
+//   toda ruta con ":id" (GET/PUT/DELETE y extras) responde 404 cuando el
+//   registro pertenece a OTRO colegio. Sin esto, findById() permitiría leer o
+//   modificar datos ajenos conociendo el id.
 const crearRouterCrud = (controlador, nombres, opciones = {}) => {
-  const { lectura = null, escritura = null, permisos = {}, extras } = opciones;
+  const { lectura = null, escritura = null, permisos = {}, extras, modelo = null } = opciones;
   const router = express.Router();
 
   router.use(verificarToken);
@@ -44,6 +49,34 @@ const crearRouterCrud = (controlador, nombres, opciones = {}) => {
     }
     next();
   });
+
+  // Rutas del tipo /institucion/:institucionId — un usuario de colegio solo
+  // puede consultar la suya (el filtro de query de arriba no cubre params).
+  router.param('institucionId', (req, res, next, valor) => {
+    const propia = req.usuario?.institucionId;
+    if (propia && String(valor) !== String(propia)) {
+      return res.status(403).json({ mensaje: 'No puedes consultar datos de otra institución.' });
+    }
+    next();
+  });
+
+  // Rutas con :id — el registro debe pertenecer al colegio del usuario.
+  if (modelo) {
+    router.param('id', async (req, res, next, id) => {
+      const propia = req.usuario?.institucionId;
+      if (!propia) return next(); // dirNucleo u otros sin colegio: sin cambios
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ mensaje: 'Identificador inválido.' });
+      }
+      try {
+        const existe = await modelo.exists({ _id: id, institucionId: propia });
+        if (!existe) return res.status(404).json({ mensaje: 'Registro no encontrado.' });
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
+  }
 
   const guarda = (accion) => {
     const esLectura = accion === 'listar' || accion === 'obtener';

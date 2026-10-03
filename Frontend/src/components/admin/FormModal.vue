@@ -63,13 +63,21 @@ function enviar() {
       </div>
 
       <form class="modal-form" @submit.prevent="enviar">
-        <label v-for="c in campos" :key="c.key" class="campo">
+        <label v-for="c in campos" :key="c.key" :class="['campo', { 'campo--ancho': c.type === 'textarea' }]">
           <span>{{ c.label }}<b v-if="c.required"> *</b></span>
 
           <select v-if="c.type === 'select'" v-model="form[c.key]" :required="c.required">
             <option v-if="!c.required || !form[c.key]" value="">Selecciona…</option>
             <option v-for="op in opcionesDe(c)" :key="op.value" :value="op.value">{{ op.label }}</option>
           </select>
+
+          <textarea
+            v-else-if="c.type === 'textarea'"
+            v-model="form[c.key]"
+            rows="4"
+            :required="c.required"
+            :placeholder="c.placeholder"
+          ></textarea>
 
           <input
             v-else
@@ -108,6 +116,9 @@ function enviar() {
 .campo { display: flex; flex-direction: column; gap: 5px; }
 .campo span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; }
 .campo b { color: #dc2626; }
+.campo textarea { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #0f172a; outline: none; font-family: inherit; resize: vertical; }
+.campo textarea:focus { border-color: #2563eb; background: white; }
+.campo--ancho { grid-column: 1 / -1; }
 .campo input, .campo select { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #0f172a; outline: none; }
 .campo input:focus, .campo select:focus { border-color: #2563eb; background: white; }
 

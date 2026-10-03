@@ -1,12 +1,16 @@
 const Bitacora = require("../models/Bitacora");
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los registros
 const obtenerRegistros = async (req, res) => {
   try {
-    const registros = await Bitacora.find()
+    // Solo los más recientes: la bitácora crece sin parar y devolverla entera satura la pantalla.
+    const limite = Math.min(Number(req.query.limite) || 500, 1000);
+    const registros = await Bitacora.find(filtroTenant(req))
       .populate("institucionId", "nombre")
       .populate("usuarioId", "nombres apellidos")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(limite);
 
     res.json(registros);
   } catch (error) {

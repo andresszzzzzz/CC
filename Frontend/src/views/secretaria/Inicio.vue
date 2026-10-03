@@ -119,9 +119,8 @@ watch(institucionId, cargar)
       <div class="tarjeta aviso">
         <AppIcon name="alert-triangle" :size="18" />
         <p>
-          Este panel muestra conteos reales tomados en vivo de tu institución. Módulos de Calificación,
-          Contabilidad, Cronograma, Documentos, Elecciones y Estadísticas se están construyendo en los
-          próximos pasos.
+          Este panel muestra conteos reales tomados en vivo de tu institución. Los módulos de Pagos y
+          cartera, Elecciones, Cronograma y Estadísticas todavía están en construcción.
         </p>
       </div>
     </template>

@@ -1,11 +1,12 @@
 const Pagos = require('../models/Pagos');
 const ConceptosContables = require('../models/ConceptosContables');
 const Matricula = require('../models/Matricula');
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los pagos
 const obtenerPagos = async (req, res) => {
   try {
-    const pagos = await Pagos.find()
+    const pagos = await Pagos.find(filtroTenant(req))
       .populate('institucionId')
       .populate('anioAcademicoId')
       .populate('estudianteId')

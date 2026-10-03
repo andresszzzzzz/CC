@@ -50,7 +50,9 @@ const obtenerComunicadoPorId = async (req, res) => {
 // Crear comunicado
 const crearComunicado = async (req, res) => {
   try {
-    const nuevoComunicado = new Comunicados(req.body);
+    // El remitente es siempre quien envía (sale del token). Antes dependía de que
+    // el navegador mandara remitenteId y varias pantallas no lo mandaban (400).
+    const nuevoComunicado = new Comunicados({ ...req.body, remitenteId: req.usuario.id });
     const guardado = await nuevoComunicado.save();
 
     res.status(201).json(guardado);
@@ -64,9 +66,10 @@ const crearComunicado = async (req, res) => {
 // Actualizar comunicado
 const actualizarComunicado = async (req, res) => {
   try {
+    const { remitenteId, ...datos } = req.body; // el remitente original no se reasigna
     const actualizado = await Comunicados.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      datos,
       {
         new: true,
         runValidators: true

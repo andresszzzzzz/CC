@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { MENU_SECRETARIA } from '@/config/menuSecretaria'
 
 // Login
 import LoginView from '../views/LoginView.vue'
@@ -59,7 +60,15 @@ const vistasSecretaria = {
   'estudiantes/ficha': () => import('../views/secretaria/EstudianteFicha.vue'),
   matriculas: () => import('../views/secretaria/Matriculas.vue'),
   'personas-roles': () => import('../views/secretaria/PersonasRoles.vue'),
-  documentos: () => import('../views/secretaria/Documentos.vue')
+  documentos: () => import('../views/secretaria/Documentos.vue'),
+  // --- Secretaría: módulos que ya tenían API en el backend ---
+  sedes: () => import('../views/secretaria/Sedes.vue'),
+  indicadores: () => import('../views/secretaria/Indicadores.vue'),
+  prematriculas: () => import('../views/secretaria/Prematriculas.vue'),
+  comunicados: () => import('../views/secretaria/Comunicados.vue'),
+  excusas: () => import('../views/secretaria/Excusas.vue'),
+  'conceptos-contables': () => import('../views/secretaria/ConceptosContables.vue'),
+  bitacora: () => import('../views/secretaria/Bitacora.vue')
 }
 const rutasSecretaria = Object.entries(vistasSecretaria).map(([ruta, component]) => ({
   path: `/secretaria/${ruta}`,
@@ -280,6 +289,7 @@ const routes = [
   },
 
   // --- Portal Secretaría (rol 'secretaria') ---
+  { path: '/secretaria', redirect: '/secretaria/inicio' },
   ...rutasSecretaria,
 
   // --- Portal Dirección de Núcleo (rol 'dirNucleo') ---
@@ -312,7 +322,13 @@ const routes = [
     ]
   },
 
-  { path: '/:pathMatch(.*)*', redirect: '/login' }
+  // Cualquier otra ruta: sin sesión el guard manda al login; con sesión se muestra una página
+  // "No encontrada" que dice cuál ruta falló (antes redirigía en silencio y ocultaba el error).
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'no-encontrada',
+    component: () => import('../views/NoEncontradaView.vue')
+  }
 ]
 
 const router = createRouter({
@@ -373,5 +389,15 @@ router.beforeEach(async (to) => {
 
   return true
 })
+
+// Solo en desarrollo: si el menú de Secretaría apunta a una ruta que no está registrada, la
+// consola lo dice con el nombre exacto (así no hay que descubrirlo haciendo clic en cada opción).
+if (import.meta.env.DEV) {
+  const registradas = new Set(router.getRoutes().map((r) => r.path))
+  const sinRuta = MENU_SECRETARIA.flatMap((g) => g.items).map((i) => i.ruta).filter((r) => !registradas.has(r))
+  if (sinRuta.length) {
+    console.warn('[router] El menú de Secretaría apunta a rutas sin definir (agrégalas a vistasSecretaria):', sinRuta)
+  }
+}
 
 export default router

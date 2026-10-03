@@ -10,6 +10,7 @@ const router = express.Router();
 
 const { crearRouterCrud, handler } = require('./crud');
 const { GESTION, GESTION_Y_DOCENTE } = require('./permisos');
+const M = require('../models'); // modelos: crearRouterCrud los usa para aislar por colegio
 
 // Ruta pública para comprobar que la API responde: GET /api/salud
 router.get('/salud', (req, res) => {
@@ -67,13 +68,14 @@ const sede = require('../controllers/sede.controller');
 router.use('/sedes', crearRouterCrud(sede, {
   listar: 'obtenerSedes', obtener: 'obtenerSedePorId', crear: 'crearSede',
   actualizar: 'actualizarSede', eliminar: 'eliminarSede'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Sede, lectura: null, escritura: GESTION }));
 
 const area = require('../controllers/area.controller');
 router.use('/areas', crearRouterCrud(area, {
   listar: 'obtenerAreas', obtener: 'obtenerAreaPorId', crear: 'crearArea',
   actualizar: 'actualizarArea', eliminar: 'eliminarArea'
 }, {
+  modelo: M.Area,
   lectura: null,
   escritura: GESTION,
   extras: (r, guarda) => {
@@ -87,6 +89,7 @@ router.use('/asignaturas', crearRouterCrud(asignatura, {
   listar: 'obtenerAsignaturas', obtener: 'obtenerAsignaturaPorId', crear: 'crearAsignatura',
   actualizar: 'actualizarAsignatura', eliminar: 'eliminarAsignatura'
 }, {
+  modelo: M.Asignatura,
   lectura: null,
   escritura: GESTION,
   extras: (r, guarda) => {
@@ -99,25 +102,25 @@ const grupo = require('../controllers/grupo.controller');
 router.use('/grupos', crearRouterCrud(grupo, {
   listar: 'obtenerGrupos', obtener: 'obtenerGrupoPorId', crear: 'crearGrupo',
   actualizar: 'actualizarGrupo', eliminar: 'eliminarGrupo'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Grupo, lectura: null, escritura: GESTION }));
 
 const indicador = require('../controllers/indicador.controller');
 router.use('/indicadores', crearRouterCrud(indicador, {
   listar: 'obtenerIndicadores', obtener: 'obtenerIndicadorPorId', crear: 'crearIndicador',
   actualizar: 'actualizarIndicador', eliminar: 'eliminarIndicador'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Indicador, lectura: null, escritura: GESTION }));
 
 const catalogo = require('../controllers/catalogo.controller');
 router.use('/catalogos', crearRouterCrud(catalogo, {
   listar: 'obtenerCatalogos', obtener: 'obtenerCatalogoPorId', crear: 'crearCatalogo',
   actualizar: 'actualizarCatalogo', eliminar: 'eliminarCatalogo'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Catalogo, lectura: null, escritura: GESTION }));
 
 const cargaAcademica = require('../controllers/cargaacademica.controller');
 router.use('/cargas-academicas', crearRouterCrud(cargaAcademica, {
   listar: 'obtenerCargasAcademicas', obtener: 'obtenerCargaAcademicaPorId', crear: 'crearCargaAcademica',
   actualizar: 'actualizarCargaAcademica', eliminar: 'eliminarCargaAcademica'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.CargaAcademica, lectura: null, escritura: GESTION }));
 
 // --- Años académicos, períodos y promoción -------------------------------
 const anio = require('../controllers/anioacademico.controller');
@@ -125,6 +128,7 @@ router.use('/anios-academicos', crearRouterCrud(anio, {
   listar: 'obtenerAnios', obtener: 'obtenerAnioPorId', crear: 'crearAnio',
   actualizar: 'actualizarAnio', eliminar: 'eliminarAnio'
 }, {
+  modelo: M.AnioAcademico,
   lectura: null,
   escritura: GESTION,
   extras: (r, guarda) => {
@@ -149,13 +153,13 @@ const matricula = require('../controllers/matricula.controller');
 router.use('/matriculas', crearRouterCrud(matricula, {
   listar: 'obtenerMatriculas', obtener: 'obtenerMatriculaPorId', crear: 'crearMatricula',
   actualizar: 'actualizarMatricula', eliminar: 'eliminarMatricula'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Matricula, lectura: null, escritura: GESTION }));
 
 const prematricula = require('../controllers/prematricula.controller');
 router.use('/prematriculas', crearRouterCrud(prematricula, {
   listar: 'obtenerPrematriculas', obtener: 'obtenerPrematriculaPorId', crear: 'crearPrematricula',
   actualizar: 'actualizarPrematricula', eliminar: 'eliminarPrematricula'
-}, { lectura: GESTION, escritura: GESTION }));
+}, { modelo: M.Prematricula, lectura: GESTION, escritura: GESTION }));
 
 // --- Calificaciones y actividades -----------------------------------------
 const calificacion = require('../controllers/calificacion.controller');
@@ -163,6 +167,7 @@ router.use('/calificaciones', crearRouterCrud(calificacion, {
   listar: 'obtenerCalificaciones', obtener: 'obtenerCalificacionPorId', crear: 'crearCalificacion',
   actualizar: 'actualizarCalificacion', eliminar: 'eliminarCalificacion'
 }, {
+  modelo: M.Calificacion,
   lectura: null,
   escritura: GESTION_Y_DOCENTE,
   extras: (r, guarda) => {
@@ -176,6 +181,7 @@ router.use('/actividades', crearRouterCrud(actividad, {
   listar: 'obtenerActividades', obtener: 'obtenerActividadPorId', crear: 'crearActividad',
   actualizar: 'actualizarActividad', eliminar: 'eliminarActividad'
 }, {
+  modelo: M.Actividad,
   lectura: null,
   escritura: GESTION_Y_DOCENTE,
   extras: (r, guarda) => {
@@ -191,19 +197,20 @@ const observador = require('../controllers/observador.controller');
 router.use('/observador', crearRouterCrud(observador, {
   listar: 'obtenerObservaciones', obtener: 'obtenerObservacionPorId', crear: 'crearObservacion',
   actualizar: 'actualizarObservacion', eliminar: 'eliminarObservacion'
-}, { lectura: null, escritura: GESTION_Y_DOCENTE }));
+}, { modelo: M.Observador, lectura: null, escritura: GESTION_Y_DOCENTE }));
 
 const comunicados = require('../controllers/comunicados.controller');
 router.use('/comunicados', crearRouterCrud(comunicados, {
   listar: 'obtenerComunicados', obtener: 'obtenerComunicadoPorId', crear: 'crearComunicado',
   actualizar: 'actualizarComunicado', eliminar: 'eliminarComunicado'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Comunicados, lectura: null, escritura: GESTION }));
 
 const excusas = require('../controllers/excusas.controller');
 router.use('/excusas', crearRouterCrud(excusas, {
   listar: 'obtenerExcusas', obtener: 'obtenerExcusaPorId', crear: 'crearExcusa',
   actualizar: 'actualizarExcusa', eliminar: 'eliminarExcusa'
 }, {
+  modelo: M.Excusas,
   lectura: null,
   permisos: { crear: null, actualizar: GESTION_Y_DOCENTE, eliminar: GESTION }
 }));
@@ -213,13 +220,14 @@ const conceptos = require('../controllers/conceptoscontables.controller');
 router.use('/conceptos-contables', crearRouterCrud(conceptos, {
   listar: 'obtenerConceptos', obtener: 'obtenerConceptoPorId', crear: 'crearConcepto',
   actualizar: 'actualizarConcepto', eliminar: 'eliminarConcepto'
-}, { lectura: GESTION, escritura: GESTION }));
+}, { modelo: M.ConceptosContables, lectura: GESTION, escritura: GESTION }));
 
 const pagos = require('../controllers/pagos.controller');
 router.use('/pagos', crearRouterCrud(pagos, {
   listar: 'obtenerPagos', obtener: 'obtenerPagoPorId', crear: 'crearPago',
   actualizar: 'actualizarPago', eliminar: 'eliminarPago'
 }, {
+  modelo: M.Pagos,
   lectura: GESTION,
   escritura: GESTION,
   extras: (r, guarda) => {
@@ -234,13 +242,13 @@ const elecciones = require('../controllers/elecciones.controller');
 router.use('/elecciones', crearRouterCrud(elecciones, {
   listar: 'obtenerElecciones', obtener: 'obtenerEleccionPorId', crear: 'crearEleccion',
   actualizar: 'actualizarEleccion', eliminar: 'eliminarEleccion'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.Elecciones, lectura: null, escritura: GESTION }));
 
 const eventoElectoral = require('../controllers/eventoelectoral.controller');
 router.use('/eventos-electorales', crearRouterCrud(eventoElectoral, {
   listar: 'obtenerEventosElectorales', obtener: 'obtenerEventoElectoralPorId', crear: 'crearEventoElectoral',
   actualizar: 'actualizarEventoElectoral', eliminar: 'eliminarEventoElectoral'
-}, { lectura: null, escritura: GESTION }));
+}, { modelo: M.EventoElectoral, lectura: null, escritura: GESTION }));
 
 const voto = require('../controllers/voto.controller');
 router.use('/votos', crearRouterCrud(voto, {
@@ -260,6 +268,7 @@ router.use('/bitacora', crearRouterCrud(bitacora, {
   listar: 'obtenerRegistros', obtener: 'obtenerRegistroPorId', crear: 'crearRegistro',
   eliminar: 'eliminarRegistro'
 }, {
+  modelo: M.Bitacora,
   lectura: GESTION,
   permisos: { crear: GESTION_Y_DOCENTE, eliminar: ['admin', 'rector'] },
   extras: (r, guarda) => {

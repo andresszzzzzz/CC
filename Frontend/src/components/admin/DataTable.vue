@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import AppIcon from '@/components/AppIcon.vue'
 
 const props = defineProps({
-  columns: { type: Array, required: true }, // [{ key, label }]
+  columns: { type: Array, required: true }, // [{ key, label, format?(valor, fila) }]
   rows: { type: Array, default: () => [] },
   cargando: { type: Boolean, default: false },
   error: { type: String, default: '' },
@@ -13,11 +13,24 @@ defineEmits(['crear', 'editar', 'eliminar'])
 
 const busqueda = ref('')
 
+// Color del badge de la columna "estado". Lo no listado (p. ej. inactivo) queda en gris.
+const TONO_ESTADO = {
+  activo: 'ok', aprobada: 'ok', matriculada: 'ok', enviado: 'ok',
+  pendiente: 'warn', borrador: 'warn',
+  rechazada: 'bad'
+}
+const tonoEstado = (estado) => TONO_ESTADO[estado] || 'off'
+
 // Lee claves anidadas como "credenciales.usuario".
 const leer = (obj, ruta) => ruta.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
 
 function textoCelda(fila, col) {
   const v = leer(fila, col.key)
+  // col.format(valor, fila) -> texto. Para fechas, nombres compuestos, etc.
+  if (col.format) {
+    const f = col.format(v, fila)
+    return f === null || f === undefined || f === '' ? '—' : String(f)
+  }
   if (v === null || v === undefined || v === '') return '—'
   if (Array.isArray(v)) return String(v.length)
   if (typeof v === 'object') return v.nombre || v.nombreCompleto || '—'
@@ -59,7 +72,7 @@ const filas = computed(() => {
             <td v-for="col in columns" :key="col.key">
               <span
                 v-if="col.key === 'estado' && fila.estado"
-                :class="['badge', fila.estado === 'activo' ? 'badge-ok' : 'badge-off']"
+                :class="['badge', 'badge-' + tonoEstado(fila.estado)]"
               >
                 {{ fila.estado }}
               </span>
@@ -100,6 +113,8 @@ const filas = computed(() => {
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
 .badge-ok { background: #dcfce7; color: #15803d; }
 .badge-off { background: #f1f5f9; color: #64748b; }
+.badge-warn { background: #fef3c7; color: #b45309; }
+.badge-bad { background: #fee2e2; color: #b91c1c; }
 
 .icono-btn { background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; }
 .icono-btn:hover { background: #eff6ff; color: #2563eb; }

@@ -1,9 +1,10 @@
 const Prematricula = require('../models/Prematricula');
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todas las prematrículas
 const obtenerPrematriculas = async (req, res) => {
   try {
-    const prematriculas = await Prematricula.find()
+    const prematriculas = await Prematricula.find(filtroTenant(req))
       .populate('institucionId')
       .populate('anioAcademicoId');
 

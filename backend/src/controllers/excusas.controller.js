@@ -1,9 +1,10 @@
 const Excusas = require("../models/Excusas");
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todas las excusas
 const obtenerExcusas = async (req, res) => {
   try {
-    const excusas = await Excusas.find()
+    const excusas = await Excusas.find(filtroTenant(req))
       .populate("institucionId")
       .populate("anioAcademicoId")
       .populate("docenteId")

@@ -1,9 +1,10 @@
 const ConceptosContables = require('../models/ConceptosContables');
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los conceptos
 const obtenerConceptos = async (req, res) => {
   try {
-    const conceptos = await ConceptosContables.find()
+    const conceptos = await ConceptosContables.find(filtroTenant(req))
       .populate('institucionId');
 
     res.json(conceptos);

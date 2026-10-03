@@ -1,9 +1,10 @@
 const Indicador = require("../models/Indicador");
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los indicadores
 const obtenerIndicadores = async (req, res) => {
   try {
-    const indicadores = await Indicador.find()
+    const indicadores = await Indicador.find(filtroTenant(req))
       .populate("institucionId")
       .populate("anioAcademicoId")
       .populate("asignaturaId");

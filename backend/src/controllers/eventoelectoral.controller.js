@@ -1,9 +1,10 @@
 const EventoElectoral = require("../models/EventoElectoral");
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los eventos electorales
 const obtenerEventosElectorales = async (req, res) => {
   try {
-    const eventos = await EventoElectoral.find()
+    const eventos = await EventoElectoral.find(filtroTenant(req))
       .populate("institucionId")
       .populate("candidatos.estudianteId");
 

@@ -1,9 +1,10 @@
 const Asignatura = require("../models/Asignatura");
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todas las asignaturas
 const obtenerAsignaturas = async (req, res) => {
   try {
-    const asignaturas = await Asignatura.find()
+    const asignaturas = await Asignatura.find(filtroTenant(req))
       .populate("institucionId", "nombre")
       .populate("areaId", "nombre");
 

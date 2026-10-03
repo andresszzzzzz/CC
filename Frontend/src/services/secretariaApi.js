@@ -51,3 +51,12 @@ export const aniosApi = {
   ...crud('/anios-academicos'),
   porInstitucion: (institucionId) => api.get(`/anios-academicos/institucion/${institucionId}`)
 }
+
+// --- Módulos con API "clásica" (/api/<recurso>) que también usa Secretaría ---
+export const indicadoresApi = crud('/indicadores')
+export const comunicadosApi = crud('/comunicados')
+export const excusasApi = crud('/excusas')
+export const conceptosContablesApi = crud('/conceptos-contables')
+export const prematriculasApi = crud('/prematriculas')
+// La bitácora es un registro de auditoría: solo se consulta, no se edita desde la pantalla.
+export const bitacoraApi = { listar: (params) => api.get('/bitacora', { params }) }
