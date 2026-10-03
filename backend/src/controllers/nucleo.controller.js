@@ -42,6 +42,68 @@ const crearInstitucion = async (req, res) => {
   }
 };
 
+const actualizarInstitucion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const institucion = await Institucion.findOne({ _id: id, nucleoId: req.usuario.nucleoId });
+
+    if (!institucion) {
+      return res.status(404).json({ mensaje: 'Institución no encontrada en este núcleo' });
+    }
+
+    // Actualizar campos permitidos (nombre, nit, direccion, telefono, estado, etc.)
+    Object.assign(institucion, req.body);
+    await institucion.save();
+
+    res.status(200).json({ mensaje: 'Institución actualizada correctamente', institucion });
+  } catch (error) {
+    res.status(400).json({ mensaje: 'Error al actualizar la institución', error: error.message });
+  }
+};
+
+// Actualizar datos y estado de una secretaría creada por el núcleo
+const actualizarSecretaria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscar primero los colegios del núcleo para validar que la secretaría pertenezca a este
+    const idsInstituciones = (await Institucion.find({ nucleoId: req.usuario.nucleoId }).select('_id')).map((i) => i._id);
+    
+    const secretaria = await Usuario.findOne({ _id: id, institucionId: { $in: idsInstituciones }, tipoPerfil: 'secretaria' });
+
+    if (!secretaria) {
+      return res.status(404).json({ mensaje: 'Secretaría no encontrada o no pertenece a este núcleo' });
+    }
+
+    const { nombre, email, telefono, estado, password } = req.body;
+
+    if (nombre) {
+      const partes = nombre.trim().split(/\s+/);
+      const mitad = Math.ceil(partes.length / 2);
+      secretaria.nombres = partes.length > 1 ? partes.slice(0, mitad).join(' ') : partes[0];
+      secretaria.apellidos = partes.length > 1 ? partes.slice(mitad).join(' ') : '-';
+    }
+
+    if (email) secretaria.email = email.trim().toLowerCase();
+    if (telefono !== undefined) secretaria.telefono = telefono;
+    if (estado) secretaria.estado = estado; // 'activo' o 'inactivo'
+
+    // Si se envía una nueva contraseña y es válida, actualizarla
+    if (password && password.length >= 6) {
+      secretaria.credenciales.passwordHash = password; // El hook de Mongoose se encarga de re-hashearla
+    }
+
+    await secretaria.save();
+
+    const obj = secretaria.toObject();
+    delete obj.credenciales;
+
+    res.status(200).json({ mensaje: 'Secretaría actualizada correctamente', data: obj });
+  } catch (error) {
+    res.status(400).json({ mensaje: 'Error al actualizar la secretaría', error: error.message });
+  }
+};
+
 // Crea el usuario administrador inicial de un colegio del núcleo.
 const crearAdminInstitucion = async (req, res) => {
   try {
@@ -293,5 +355,7 @@ module.exports = {
   comparativo,
   reportes,
   crearSecretaria,
-  listarSecretarias
+  listarSecretarias,
+  actualizarInstitucion,
+  actualizarSecretaria
 };
