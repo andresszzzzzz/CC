@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
+const Institucion = require('../models/Institucion');
 const AnioAcademico = require('../models/AnioAcademico');
 
 const generarToken = (usuario) => {
@@ -22,8 +23,6 @@ const sinPassword = (usuario) => {
 };
 
 // Login. Recibe { usuario | email, password, institucionId? }
-// institucionId es necesario cuando el mismo usuario (ej. acudiente) puede
-// tener perfiles en más de una institución.
 const login = async (req, res) => {
   try {
     const { usuario: nombreUsuario, email, password, institucionId } = req.body;
@@ -42,6 +41,14 @@ const login = async (req, res) => {
 
     if (!usuario || usuario.estado !== 'activo') {
       return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+    }
+
+    // Validación de estado de la institución asociada
+    if (usuario.institucionId) {
+      const institucion = await Institucion.findById(usuario.institucionId);
+      if (!institucion || institucion.estado === 'inactivo') {
+        return res.status(401).json({ mensaje: 'La institución se encuentra inactiva. No es posible iniciar sesión.' });
+      }
     }
 
     const passwordValida = await usuario.compararPassword(password);
@@ -64,9 +71,7 @@ const login = async (req, res) => {
   }
 };
 
-// El logout es solo del lado del cliente (JWT es stateless): basta con que
-// el frontend descarte el token. Este endpoint existe para mantener el
-// contrato de la API y poder añadir una lista negra de tokens en el futuro.
+// El logout es solo del lado del cliente (JWT es stateless)
 const logout = (req, res) => {
   res.status(200).json({ mensaje: 'Sesión cerrada correctamente' });
 };
@@ -101,11 +106,7 @@ const cambiarPassword = async (req, res) => {
   }
 };
 
-// Recuperación de contraseña por email. No hay servicio de correo configurado
-// todavía (ver PLAN_MIGRACION sección 2.1); por eso, de momento, solo deja
-// preparado el flujo y responde 501. Cuando se integre un proveedor de email
-// (ej. Nodemailer + SMTP o un servicio como Resend), aquí se debe generar un
-// token de un solo uso y enviarlo por correo.
+// Recuperación de contraseña por email
 const recuperarPassword = async (req, res) => {
   res.status(501).json({
     mensaje: 'La recuperación de contraseña por correo aún no está disponible. Por ahora, un administrador debe restablecerla desde /api/usuarios/:id/password.'
