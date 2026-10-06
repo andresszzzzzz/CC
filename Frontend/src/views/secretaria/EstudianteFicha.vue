@@ -52,7 +52,7 @@ async function alternarEstado() {
     <template v-if="ficha">
       <section class="sec-panel">
         <div class="sec-grid" style="grid-template-columns:200px 1fr">
-          <ImageUploader v-model="est.fotoUrl" tipo="estudiante" :extra="{ personaId: est._id }" etiqueta="Fotografía" :contener="false" :altura="220" />
+          <ImageUploader v-model="est.foto" tipo="estudiante" :extra="{ personaId: est._id }" etiqueta="Fotografía" :contener="false" :altura="220" />
           <div>
             <h3 style="font-size:18px">{{ nombrePersona(est) }}</h3>
             <p class="sec-ayuda">Documento {{ est.documento }} · {{ est.correo || 'sin correo' }}</p>

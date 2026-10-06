@@ -72,11 +72,14 @@ export function camposPersona({ incluirRol = false } = {}) {
       soloCreacion: true,
       minlength: 6
     },
+    // Solo se muestra al EDITAR: toda persona nueva se crea siempre como "activo"
+    // y desde aquí (al editar) se puede inactivar o reactivar.
     {
       key: 'estado',
       label: 'Estado',
       type: 'select',
       default: 'activo',
+      soloEdicion: true,
       opciones: [
         { value: 'activo', label: 'Activo' },
         { value: 'inactivo', label: 'Inactivo' }

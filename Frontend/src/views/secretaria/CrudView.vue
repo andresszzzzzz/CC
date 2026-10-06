@@ -127,7 +127,11 @@ const valoresIniciales = computed(() => editando.value || {})
 // Campos marcados con soloCreacion (ej. usuario/contraseña iniciales) se
 // ocultan al editar, porque el backend los ignora en la actualización y
 // tienen su propio flujo (restablecer contraseña) fuera de este formulario.
-const camposActivos = computed(() => props.campos.filter((c) => !(editando.value && c.soloCreacion)))
+// Los marcados con soloEdicion (ej. el estado activo/inactivo) solo aparecen al editar:
+// al crear, el registro nace "activo" y no se pregunta.
+const camposActivos = computed(() =>
+  props.campos.filter((c) => !(editando.value && c.soloCreacion) && !(!editando.value && c.soloEdicion))
+)
 </script>
 
 <template>

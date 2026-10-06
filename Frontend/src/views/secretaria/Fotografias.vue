@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import ImageUploader from '@/components/admin/ImageUploader.vue'
 import { imagenesApi, institucionCfgApi, personasApi } from '@/services/secretariaApiExt'
+import { urlPublica } from '@/services/api'
 import { useConfigInstitucional } from '@/composables/useConfigInstitucional'
 import { useCatalogos } from '@/composables/useCatalogos'
 import '@/styles/secretaria-ui.css'
@@ -19,11 +20,15 @@ watch(tab, async (t) => {
   persona.value = null; res.value = []; q.value = ''; msg.value = ''; error.value = ''
   if (t === 'institucional') galeria.value = (await imagenesApi.galeria(t).catch(() => ({ data: [] }))).data || []
 })
-async function guardarCampo(campo, url) { await institucionCfgApi.guardar({ ...institucion.value, [campo]: url }); await recargar(); msg.value = 'Imagen actualizada.' }
+async function guardarCampo(campo, url) {
+  msg.value = ''; error.value = ''
+  try { await institucionCfgApi.guardar({ ...institucion.value, [campo]: url }); await recargar(); msg.value = 'Imagen actualizada.' }
+  catch (e) { error.value = e.response?.data?.mensaje || 'La imagen se subió, pero no se pudo guardar en la institución.' }
+}
 async function buscar() { if (q.value.trim().length >= 2) res.value = (await personasApi.buscar(q.value.trim(), institucionId.value).catch(() => ({ data: [] }))).data || [] }
 async function subirGaleria(e) {
   for (const f of e.target.files) {
-    try { const { data } = await imagenesApi.subir('institucional', f); galeria.value.push(data) } catch { error.value = 'No se pudo subir una de las imágenes.' }
+    try { const { data } = await imagenesApi.subir('institucional', f); galeria.value.push(data) } catch (e) { error.value = e.response?.data?.mensaje || 'No se pudo subir una de las imágenes.' }
   }
   e.target.value = ''
 }
@@ -47,7 +52,7 @@ async function quitarGaleria(g, i) { if (confirm('¿Eliminar esta foto?')) { awa
       <h3>Fotos institucionales adicionales</h3>
       <label class="sec-btn sec-btn--sec" style="display:inline-block;margin:10px 0;cursor:pointer">+ Subir fotos<input type="file" accept="image/*" multiple hidden @change="subirGaleria" /></label>
       <p v-if="!galeria.length" class="sec-vacio">Aún no hay fotos.</p>
-      <div class="sec-grid"><div v-for="(g, i) in galeria" :key="g._id || i"><img :src="g.url" style="width:100%;height:140px;object-fit:cover;border-radius:12px" /><button class="sec-btn sec-btn--peligro" style="margin-top:6px" @click="quitarGaleria(g, i)">Eliminar</button></div></div>
+      <div class="sec-grid"><div v-for="(g, i) in galeria" :key="g._id || i"><img :src="urlPublica(g.url)" style="width:100%;height:140px;object-fit:cover;border-radius:12px" /><button class="sec-btn sec-btn--peligro" style="margin-top:6px" @click="quitarGaleria(g, i)">Eliminar</button></div></div>
     </section>
     <section v-else-if="esPersona" class="sec-panel">
       <div class="sec-fila">
@@ -56,7 +61,7 @@ async function quitarGaleria(g, i) { if (confirm('¿Eliminar esta foto?')) { awa
       </div>
       <div v-for="r in res" :key="r._id" class="sec-resultado" @click="persona = r; res = []"><span>{{ nombrePersona(r) }} · {{ r.documento }}</span></div>
       <div v-if="persona" style="max-width:260px;margin-top:14px">
-        <ImageUploader v-model="persona.fotoUrl" :tipo="tab" :extra="{ personaId: persona._id }" :etiqueta="'Foto de ' + nombrePersona(persona)" :contener="false" :altura="240" @subido="msg = 'Fotografía actualizada.'" />
+        <ImageUploader v-model="persona.foto" :tipo="tab" :extra="{ personaId: persona._id }" :etiqueta="'Foto de ' + nombrePersona(persona)" :contener="false" :altura="240" @subido="msg = 'Fotografía actualizada.'" />
       </div>
     </section>
   </AppLayout>

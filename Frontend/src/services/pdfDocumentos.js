@@ -3,6 +3,7 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { desempeno, formatear } from '@/utils/calificacion'
+import { urlPublica } from '@/services/api'
 
 const AZUL = [30, 58, 138]
 const GRIS = [100, 116, 139]
@@ -11,7 +12,11 @@ export async function urlADataUrl(url) {
   if (!url) return null
   if (url.startsWith('data:')) return url
   try {
-    const blob = await (await fetch(url, { credentials: 'include' })).blob()
+    // Las imágenes están en el backend (otro dominio): se pide la URL completa y SIN cookies
+    // (con credentials:'include' el navegador bloquea la respuesta porque el backend responde Access-Control-Allow-Origin: *).
+    const resp = await fetch(urlPublica(url), { credentials: 'omit' })
+    if (!resp.ok) return null
+    const blob = await resp.blob()
     return await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob) })
   } catch { return null }
 }

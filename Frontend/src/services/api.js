@@ -41,5 +41,18 @@ api.interceptors.response.use(
   }
 )
 
+// Las imágenes se guardan como ruta relativa (ej. "/uploads/instituciones/123.png") y viven en el
+// BACKEND, no en el frontend. Esta función le pone delante la dirección del backend para que el
+// navegador las encuentre (si no, las busca en el dominio del frontend y salen rotas).
+const origenApi = (() => {
+  try { return new URL(baseURL).origin } catch { return '' }
+})()
+
+export function urlPublica(url) {
+  if (!url) return ''
+  if (/^(https?:|data:|blob:)/i.test(url)) return url
+  return origenApi + (url.startsWith('/') ? url : '/' + url)
+}
+
 export default api
 export { baseURL }
