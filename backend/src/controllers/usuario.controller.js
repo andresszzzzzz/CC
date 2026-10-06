@@ -81,6 +81,10 @@ const crearUsuario = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permisos para crear usuarios con ese rol' });
     }
 
+    // Toda persona nueva (estudiante, docente, acudiente, etc.) nace SIEMPRE activa,
+    // sin importar lo que mande el navegador. Después se inactiva desde la edición.
+    datos.estado = 'activo';
+
     const nuevoUsuario = new Usuario(datos);
     await nuevoUsuario.save();
 

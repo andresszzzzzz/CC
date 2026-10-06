@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -14,13 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares de seguridad y utilidad
-app.use(helmet());
+// Helmet bloquea por defecto que OTRO origen cargue tus archivos (Cross-Origin-Resource-Policy: same-origin).
+// Como el frontend y el backend viven en dominios distintos, hay que permitirlo o las fotos/firmas no se ven.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Archivos subidos (fotos, escudos, firmas, carnets) — reemplazo del FTP externo del sistema viejo
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Límite de intentos de login para mitigar fuerza bruta
 const limitadorLogin = rateLimit({
