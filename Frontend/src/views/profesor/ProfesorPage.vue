@@ -472,73 +472,116 @@
       </section>
 
       <!-- ================= CALIFICACIONES ================= -->
-      <section
-        v-else-if="
-          seccionActiva === 'calificaciones'
-        "
-        class="content-section"
-      >
+      <section v-else-if="seccionActiva === 'calificaciones'" class="content-section">
         <div class="section-title">
           <div>
             <h2>Calificaciones</h2>
-            <p>
-              Gestiona las calificaciones de
-              tus estudiantes.
-            </p>
+            <p>Consulta y registra las notas de tus estudiantes.</p>
           </div>
+          <button type="button" class="primary-button" @click="guardarCalificaciones" :disabled="guardandoCalificaciones">
+            {{ guardandoCalificaciones ? "Guardando..." : "Guardar calificaciones" }}
+          </button>
         </div>
-
         <div class="panel">
-          <div class="empty-state large">
-            <div class="empty-icon">
-              <ClipboardPenLine
-                :size="42"
-              />
+          <div class="filters">
+            <div class="field">
+              <label>Grupo</label>
+              <select v-model="grupoCalificacionesId" @change="cargarEstudiantesParaCalificar">
+                <option value="">Selecciona un grupo</option>
+                <option v-for="grupo in grupos" :key="grupo._id || grupo.id" :value="String(grupo._id || grupo.id)">
+                  {{ nombreElemento(grupo) }}
+                </option>
+              </select>
             </div>
-
-            <h3>
-              Módulo de calificaciones
-            </h3>
-
-            <p>
-              Esta sección estará disponible
-              próximamente.
-            </p>
+            <div class="field">
+              <label>Asignatura</label>
+              <select v-model="asignaturaCalificacionesId" @change="cargarEstudiantesParaCalificar">
+                <option value="">Selecciona una asignatura</option>
+                <option v-for="asignatura in asignaturas" :key="asignatura._id || asignatura.id" :value="String(asignatura._id || asignatura.id)">
+                  {{ nombreElemento(asignatura) }}
+                </option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Periodo</label>
+              <select v-model.number="periodoCalificaciones" @change="cargarEstudiantesParaCalificar">
+                <option :value="1">Periodo 1</option><option :value="2">Periodo 2</option>
+                <option :value="3">Periodo 3</option><option :value="4">Periodo 4</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Estudiante a calificar</label>
+              <select v-model="estudianteCalificacionId">
+                <option value="">Todos los estudiantes</option>
+                <option v-for="estudiante in estudiantesCalificaciones" :key="estudiante.id" :value="estudiante.id">
+                  {{ estudiante.nombre }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div v-if="estudiantesCalificacionesVisibles.length" class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Estudiante</th><th>Nota (0–5)</th><th>Observación</th></tr></thead>
+              <tbody>
+                <tr v-for="estudiante in estudiantesCalificacionesVisibles" :key="estudiante.id">
+                  <td>{{ estudiante.nombre }}</td>
+                  <td><input v-model.number="estudiante.nota" type="number" min="0" max="5" step="0.1" class="table-input" /></td>
+                  <td><input v-model="estudiante.observacion" type="text" class="table-input" placeholder="Comentario opcional" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state large">
+            <div class="empty-icon"><ClipboardPenLine :size="42" /></div>
+            <h3>{{ grupoCalificacionesId ? "No hay estudiantes para calificar" : "Selecciona un grupo" }}</h3>
+            <p>{{ grupoCalificacionesId ? "No se encontraron estudiantes matriculados en este grupo. Verifica que el grupo tenga estudiantes asignados." : "Elige un grupo para cargar únicamente los estudiantes matriculados y registrar sus calificaciones." }}</p>
           </div>
         </div>
       </section>
 
       <!-- ================= ASISTENCIA ================= -->
-      <section
-        v-else-if="seccionActiva === 'asistencia'"
-        class="content-section"
-      >
+      <section v-else-if="seccionActiva === 'asistencia'" class="content-section">
         <div class="section-title">
-          <div>
-            <h2>Asistencia</h2>
-            <p>
-              Controla la asistencia de tus
-              estudiantes.
-            </p>
-          </div>
+          <div><h2>Asistencia</h2><p>Registra y consulta la asistencia de tus estudiantes.</p></div>
+          <button type="button" class="primary-button" @click="guardarAsistencia" :disabled="guardandoAsistencia">
+            {{ guardandoAsistencia ? "Guardando..." : "Guardar asistencia" }}
+          </button>
         </div>
-
         <div class="panel">
-          <div class="empty-state large">
-            <div class="empty-icon">
-              <CalendarCheck
-                :size="42"
-              />
+          <div class="filters">
+            <div class="field">
+              <label>Grupo</label>
+              <select v-model="grupoAsistenciaId" @change="cargarEstudiantesAsistencia">
+                <option value="">Selecciona un grupo</option>
+                <option v-for="grupo in grupos" :key="grupo._id || grupo.id" :value="String(grupo._id || grupo.id)">{{ nombreElemento(grupo) }}</option>
+              </select>
             </div>
-
-            <h3>
-              Módulo de asistencia
-            </h3>
-
-            <p>
-              Esta sección estará disponible
-              próximamente.
-            </p>
+            <div class="field">
+              <label>Fecha</label>
+              <input v-model="fechaAsistencia" type="date" @change="cargarEstudiantesAsistencia" />
+            </div>
+          </div>
+          <div v-if="estudiantesAsistencia.length" class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Estudiante</th><th>Estado</th><th>Nota</th></tr></thead>
+              <tbody>
+                <tr v-for="estudiante in estudiantesAsistencia" :key="estudiante.id">
+                  <td>{{ estudiante.nombre }}</td>
+                  <td>
+                    <select v-model="estudiante.estado" class="table-input">
+                      <option value="presente">Presente</option><option value="ausente">Ausente</option>
+                      <option value="retardo">Retardo</option><option value="excusa">Excusa</option>
+                    </select>
+                  </td>
+                  <td><input v-model="estudiante.nota" class="table-input" placeholder="Observación opcional" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state large">
+            <div class="empty-icon"><CalendarCheck :size="42" /></div>
+            <h3>Selecciona un grupo</h3>
+            <p>Después de seleccionar el grupo, podrás marcar presente, ausente, retardo o excusa.</p>
           </div>
         </div>
       </section>
@@ -651,38 +694,52 @@
       </section>
 
       <!-- ================= OBSERVACIONES ================= -->
-      <section
-        v-else-if="
-          seccionActiva === 'observaciones'
-        "
-        class="content-section"
-      >
+      <section v-else-if="seccionActiva === 'observaciones'" class="content-section">
         <div class="section-title">
-          <div>
-            <h2>Observaciones</h2>
-            <p>
-              Registra observaciones sobre tus
-              estudiantes.
-            </p>
-          </div>
+          <div><h2>Observaciones</h2><p>Registra y consulta observaciones académicas o de convivencia.</p></div>
+          <button type="button" class="primary-button" @click="mostrarFormularioObservacion = !mostrarFormularioObservacion">
+            {{ mostrarFormularioObservacion ? "Cancelar" : "+ Nueva observación" }}
+          </button>
         </div>
-
-        <div class="panel">
-          <div class="empty-state large">
-            <div class="empty-icon">
-              <NotebookPen
-                :size="42"
-              />
+        <div v-if="mostrarFormularioObservacion" class="panel inline-form-panel">
+          <form class="modal-form" novalidate @submit.prevent="crearObservacion">
+            <div class="form-grid">
+              <div class="field"><label>Grupo</label>
+                <select v-model="nuevaObservacion.grupoId" @change="cargarEstudiantesObservacion"><option value="">Selecciona un grupo</option>
+                  <option v-for="grupo in grupos" :key="grupo._id || grupo.id" :value="String(grupo._id || grupo.id)">{{ nombreElemento(grupo) }}</option>
+                </select>
+              </div>
+              <div class="field"><label>Estudiante</label>
+                <select v-model="nuevaObservacion.estudianteId"><option value="">Selecciona estudiante</option>
+                  <option v-for="estudiante in estudiantesObservacion" :key="estudiante.id" :value="estudiante.id">{{ estudiante.nombre }}</option>
+                </select>
+              </div>
+              <div class="field"><label>Tipo</label>
+                <select v-model="nuevaObservacion.tipo"><option value="academica">Académica</option><option value="convivencia">Convivencia</option><option value="positiva">Positiva</option><option value="seguimiento">Seguimiento</option></select>
+              </div>
+              <div class="field"><label>Fecha</label><input v-model="nuevaObservacion.fecha" type="date" /></div>
             </div>
-
-            <h3>
-              Módulo de observaciones
-            </h3>
-
-            <p>
-              Esta sección estará disponible
-              próximamente.
-            </p>
+            <div class="field"><label>Observación</label><textarea v-model="nuevaObservacion.descripcion" placeholder="Describe la observación con respeto y claridad..."></textarea></div>
+            <div class="modal-actions">
+              <button type="button" class="secondary-button" @click="mostrarFormularioObservacion = false">Cancelar</button>
+              <button type="submit" class="primary-button">Guardar observación</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel">
+          <div v-if="observaciones.length" class="activity-list">
+            <div v-for="observacion in observaciones" :key="observacion.id" class="activity-card">
+              <div class="activity-icon"><NotebookPen :size="20" /></div>
+              <div class="activity-content">
+                <h3>{{ observacion.estudianteNombre || "Estudiante" }} · {{ observacion.tipo }}</h3>
+                <p>{{ observacion.descripcion }}</p>
+                <div class="activity-info"><span>{{ observacion.grupoNombre || "Grupo" }}</span><span>{{ observacion.fecha }}</span></div>
+              </div>
+              <button type="button" class="secondary-button compact-button" @click="eliminarObservacion(observacion.id)">Eliminar</button>
+            </div>
+          </div>
+          <div v-else class="empty-state large">
+            <div class="empty-icon"><NotebookPen :size="42" /></div><h3>No hay observaciones</h3><p>Usa “Nueva observación” para registrar la primera.</p>
           </div>
         </div>
       </section>
@@ -761,6 +818,18 @@
                   }}
                 </p>
               </div>
+
+              <div class="communication-actions">
+                <button
+                  type="button"
+                  class="delete-communication-button"
+                  :disabled="eliminandoComunicadoId === String(comunicado._id || comunicado.id || '')"
+                  @click="eliminarComunicado(comunicado)"
+                  :aria-label="`Eliminar comunicado ${comunicado.asunto || ''}`"
+                >
+                  {{ eliminandoComunicadoId === String(comunicado._id || comunicado.id || '') ? "Eliminando..." : "Eliminar" }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -788,78 +857,53 @@
       </section>
 
       <!-- ================= HORARIO ================= -->
-      <section
-        v-else-if="seccionActiva === 'horario'"
-        class="content-section"
-      >
+      <section v-else-if="seccionActiva === 'horario'" class="content-section">
         <div class="section-title">
-          <div>
-            <h2>Horario</h2>
-            <p>
-              Consulta tu horario académico.
-            </p>
-          </div>
+          <div><h2>Horario</h2><p>Organiza y consulta tus clases de la semana.</p></div>
+          <button type="button" class="primary-button" @click="mostrarFormularioHorario = !mostrarFormularioHorario">
+            {{ mostrarFormularioHorario ? "Cancelar" : "+ Agregar clase" }}
+          </button>
         </div>
-
-        <div class="panel">
-          <div class="empty-state large">
-            <div class="empty-icon">
-              <CalendarDays
-                :size="42"
-              />
+        <div v-if="mostrarFormularioHorario" class="panel inline-form-panel">
+          <form class="modal-form" novalidate @submit.prevent="crearHorario">
+            <div class="form-grid">
+              <div class="field"><label>Día</label><select v-model="nuevoHorario.dia"><option v-for="dia in diasSemana" :key="dia" :value="dia">{{ dia }}</option></select></div>
+              <div class="field"><label>Grupo</label><select v-model="nuevoHorario.grupoId"><option value="">Selecciona un grupo</option><option v-for="grupo in grupos" :key="grupo._id || grupo.id" :value="String(grupo._id || grupo.id)">{{ nombreElemento(grupo) }}</option></select></div>
+              <div class="field"><label>Asignatura</label><select v-model="nuevoHorario.asignaturaId"><option value="">Selecciona asignatura</option><option v-for="asignatura in asignaturas" :key="asignatura._id || asignatura.id" :value="String(asignatura._id || asignatura.id)">{{ nombreElemento(asignatura) }}</option></select></div>
+              <div class="field"><label>Hora de inicio</label><input v-model="nuevoHorario.inicio" type="time" /></div>
+              <div class="field"><label>Hora de finalización</label><input v-model="nuevoHorario.fin" type="time" /></div>
+              <div class="field"><label>Salón (opcional)</label><input v-model="nuevoHorario.salon" type="text" placeholder="Ej. Aula 203" /></div>
             </div>
-
-            <h3>
-              Módulo de horario
-            </h3>
-
-            <p>
-              Esta sección estará disponible
-              próximamente.
-            </p>
+            <div class="modal-actions"><button type="button" class="secondary-button" @click="mostrarFormularioHorario = false">Cancelar</button><button type="submit" class="primary-button">Guardar clase</button></div>
+          </form>
+        </div>
+        <div class="panel">
+          <div v-if="horarios.length" class="activity-list">
+            <div v-for="clase in horariosOrdenados" :key="clase.id" class="activity-card">
+              <div class="activity-icon"><CalendarDays :size="20" /></div>
+              <div class="activity-content"><h3>{{ clase.dia }} · {{ clase.inicio }}–{{ clase.fin }}</h3><p>{{ clase.asignaturaNombre }} · {{ clase.grupoNombre }}</p><div class="activity-info"><span v-if="clase.salon">Salón {{ clase.salon }}</span></div></div>
+              <button type="button" class="secondary-button compact-button" @click="eliminarHorario(clase.id)">Eliminar</button>
+            </div>
           </div>
+          <div v-else class="empty-state large"><div class="empty-icon"><CalendarDays :size="42" /></div><h3>Tu horario está vacío</h3><p>Agrega tus clases para tenerlas organizadas por día y hora.</p></div>
         </div>
       </section>
 
       <!-- ================= PERFIL ================= -->
-      <section
-        v-else-if="seccionActiva === 'perfil'"
-        class="content-section"
-      >
-        <div class="section-title">
-          <div>
-            <h2>Perfil</h2>
-            <p>
-              Información de tu cuenta de
-              profesor.
-            </p>
-          </div>
+      <section v-else-if="seccionActiva === 'perfil'" class="content-section">
+        <div class="section-title"><div><h2>Perfil</h2><p>Consulta y actualiza tu información personal.</p></div>
+          <button type="button" class="primary-button" @click="guardarPerfil" :disabled="guardandoPerfil">{{ guardandoPerfil ? "Guardando..." : "Guardar cambios" }}</button>
         </div>
-
-        <div class="panel profile-panel">
-          <div class="profile-large">
-            {{ inicialesProfesor }}
-          </div>
-
-          <div class="profile-data">
-            <div>
-              <span>Nombre</span>
-              <strong>
-                {{ nombreProfesor }}
-              </strong>
+        <div class="panel profile-edit-panel">
+          <div class="profile-large">{{ inicialesProfesor }}</div>
+          <div class="profile-edit-fields">
+            <div class="form-grid">
+              <div class="field"><label>Nombres</label><input v-model="perfilEditado.nombres" type="text" /></div>
+              <div class="field"><label>Apellidos</label><input v-model="perfilEditado.apellidos" type="text" /></div>
+              <div class="field"><label>Correo electrónico</label><input v-model="perfilEditado.email" type="email" /></div>
+              <div class="field"><label>Usuario</label><input v-model="perfilEditado.usuario" type="text" /></div>
             </div>
-
-            <div>
-              <span>Correo</span>
-              <strong>
-                {{ correoProfesor }}
-              </strong>
-            </div>
-
-            <div>
-              <span>Tipo de perfil</span>
-              <strong>Docente</strong>
-            </div>
+            <p class="profile-hint">Los cambios se guardan en tu cuenta si el servidor admite la actualización; si no, se conservan localmente en este navegador.</p>
           </div>
         </div>
       </section>
@@ -1316,9 +1360,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { onMounted as onMountedBody, onUnmounted } from "vue";
-import { baseURL } from "@/services/api";
-import { useAuthStore } from "@/stores/auth";
 
 import {
   House,
@@ -1338,14 +1379,6 @@ import {
 } from "@lucide/vue";
 
 const router = useRouter();
-const authStore = useAuthStore();
-
-// La URL base sale del mismo lugar que el resto de la app (VITE_API_URL).
-const urlApi = (ruta: string) => `${baseURL}${ruta.replace(/^\/api/, "")}`;
-
-// Estilos globales propios de este portal, activos solo mientras esta vista está montada.
-onMountedBody(() => document.body.classList.add("portal-docente"));
-onUnmounted(() => document.body.classList.remove("portal-docente"));
 
 /* =========================================================
    NAVEGACIÓN
@@ -1558,6 +1591,7 @@ const nuevaActividad = ref({
 ========================================================= */
 
 const comunicados = ref<any[]>([]);
+const eliminandoComunicadoId = ref("");
 
 const mostrarFormularioComunicado =
   ref(false);
@@ -1624,19 +1658,19 @@ const cargarDatosActividad =
         respuestaIndicadores,
         respuestaAnios,
       ] = await Promise.all([
-        fetch(urlApi("/grupos"), {
+        fetch("/api/grupos", {
           headers,
         }),
 
-        fetch(urlApi("/asignaturas"), {
+        fetch("/api/asignaturas", {
           headers,
         }),
 
-        fetch(urlApi("/indicadores"), {
+        fetch("/api/indicadores", {
           headers,
         }),
 
-        fetch(urlApi("/anios-academicos"), {
+        fetch("/api/anios-academicos", {
           headers,
         }),
       ]);
@@ -1778,7 +1812,7 @@ const cargarActividades =
 
     try {
       const respuesta = await fetch(
-        urlApi("/actividades"),
+        "/api/actividades",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1980,7 +2014,7 @@ const crearActividad = async () => {
     };
 
     const respuesta = await fetch(
-      urlApi("/actividades"),
+      "/api/actividades",
       {
         method: "POST",
 
@@ -2075,6 +2109,45 @@ const cerrarFormularioComunicado =
   };
 
 /* =========================================================
+   ELIMINAR COMUNICADO
+========================================================= */
+
+const eliminarComunicado = async (comunicado: any) => {
+  const id = String(comunicado?._id || comunicado?.id || "");
+  if (!id) {
+    mostrarMensaje("Este comunicado no tiene un identificador válido para eliminarlo.", "error");
+    return;
+  }
+  if (eliminandoComunicadoId.value) return;
+
+  const token = obtenerToken();
+  if (!token) {
+    mostrarMensaje("No hay una sesión activa para eliminar el comunicado.", "error");
+    return;
+  }
+
+  eliminandoComunicadoId.value = id;
+  try {
+    const respuesta = await fetch(`/api/comunicados/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    let datos: any = {};
+    try { datos = await respuesta.json(); } catch { /* respuesta sin JSON */ }
+    if (!respuesta.ok) {
+      throw new Error(datos?.mensaje || datos?.message || "No se pudo eliminar. Comprueba que el backend tenga habilitada la ruta DELETE /api/comunicados/:id.");
+    }
+
+    comunicados.value = comunicados.value.filter((item: any) => String(item?._id || item?.id || "") !== id);
+    mostrarMensaje("Comunicado eliminado correctamente.", "exito");
+  } catch (error: any) {
+    mostrarMensaje(error?.message || "Ocurrió un error al eliminar el comunicado.", "error");
+  } finally {
+    eliminandoComunicadoId.value = "";
+  }
+};
+
+/* =========================================================
    CARGAR COMUNICADOS
 ========================================================= */
 
@@ -2088,7 +2161,7 @@ const cargarComunicados =
 
     try {
       const respuesta = await fetch(
-        urlApi("/comunicados"),
+        "/api/comunicados",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -2239,7 +2312,7 @@ const crearComunicado =
       };
 
       const respuesta = await fetch(
-        urlApi("/comunicados"),
+        "/api/comunicados",
         {
           method: "POST",
 
@@ -2295,35 +2368,495 @@ const crearComunicado =
     }
   };
 
+
+/* =========================================================
+   FUNCIONES DE CALIFICACIONES, ASISTENCIA, OBSERVACIONES,
+   HORARIO Y PERFIL
+   Se intenta usar la API. Si el endpoint no está disponible,
+   los registros de estas secciones se conservan en localStorage.
+========================================================= */
+
+const grupoCalificacionesId = ref("");
+const asignaturaCalificacionesId = ref("");
+const periodoCalificaciones = ref(1);
+const estudiantesCalificaciones = ref<any[]>([]);
+const estudianteCalificacionId = ref("");
+const estudiantesCalificacionesVisibles = computed(() => {
+  if (!estudianteCalificacionId.value) return estudiantesCalificaciones.value;
+  return estudiantesCalificaciones.value.filter((e: any) => String(e.id) === String(estudianteCalificacionId.value));
+});
+const guardandoCalificaciones = ref(false);
+
+const grupoAsistenciaId = ref("");
+const fechaAsistencia = ref(new Date().toISOString().slice(0, 10));
+const estudiantesAsistencia = ref<any[]>([]);
+const guardandoAsistencia = ref(false);
+
+const mostrarFormularioObservacion = ref(false);
+const observaciones = ref<any[]>([]);
+const estudiantesObservacion = ref<any[]>([]);
+const nuevaObservacion = ref({
+  grupoId: "",
+  estudianteId: "",
+  tipo: "academica",
+  fecha: new Date().toISOString().slice(0, 10),
+  descripcion: "",
+});
+
+const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const mostrarFormularioHorario = ref(false);
+const horarios = ref<any[]>([]);
+const nuevoHorario = ref({
+  dia: "Lunes",
+  grupoId: "",
+  asignaturaId: "",
+  inicio: "07:00",
+  fin: "08:00",
+  salon: "",
+});
+const horariosOrdenados = computed(() => {
+  const orden = diasSemana;
+  return [...horarios.value].sort((a, b) =>
+    orden.indexOf(a.dia) - orden.indexOf(b.dia) ||
+    String(a.inicio).localeCompare(String(b.inicio))
+  );
+});
+
+const perfilEditado = ref({
+  nombres: usuario?.nombres || usuario?.nombre || "",
+  apellidos: usuario?.apellidos || "",
+  email: usuario?.email || "",
+  usuario: usuario?.usuario || "",
+});
+const guardandoPerfil = ref(false);
+
+const leerLocal = (clave: string) => {
+  try {
+    const valor = localStorage.getItem(`easynotes_profesor_${clave}`);
+    return valor ? JSON.parse(valor) : [];
+  } catch {
+    return [];
+  }
+};
+
+const guardarLocal = (clave: string, valor: any) => {
+  localStorage.setItem(`easynotes_profesor_${clave}`, JSON.stringify(valor));
+};
+
+const idDe = (elemento: any) => String(elemento?._id || elemento?.id || elemento?.usuarioId || "");
+
+const nombrePersona = (elemento: any) => {
+  const nombre = [elemento?.nombres, elemento?.apellidos].filter(Boolean).join(" ").trim();
+  return nombre || elemento?.nombreCompleto || elemento?.nombre || elemento?.usuario || elemento?.email || "Estudiante";
+};
+
+const rolNormalizado = (item: any): string => {
+  const rol = item?.rol ?? item?.role ?? item?.tipoUsuario ?? item?.tipo_usuario ??
+    item?.rolUsuario ?? item?.tipoPerfil ?? item?.tipo ?? item?.perfil?.rol ??
+    item?.usuario?.rol ?? item?.usuario?.role ?? item?.usuario?.tipoUsuario ??
+    item?.estudiante?.rol ?? item?.estudiante?.tipoUsuario ?? "";
+  return String(rol).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+};
+
+const esEstudiante = (item: any, asumirEstudiante = false): boolean => {
+  const rol = rolNormalizado(item);
+  const rolesEstudiante = ["estudiante", "alumno", "aprendiz", "student"];
+  const rolesNoEstudiante = ["coordinador", "coordinator", "profesor", "docente", "administrador", "admin", "acudiente", "padre", "madre"];
+  if (rolesEstudiante.some((r) => rol === r || rol.includes(r))) return true;
+  if (rolesNoEstudiante.some((r) => rol === r || rol.includes(r))) return false;
+  return asumirEstudiante;
+};
+
+const extraerLista = (datos: any): any[] => {
+  if (Array.isArray(datos)) return datos;
+  if (!datos || typeof datos !== "object") return [];
+  for (const clave of ["estudiantes", "alumnos", "matriculas", "matrículas", "usuarios", "data", "results", "resultados", "docs"]) {
+    const valor = datos[clave];
+    if (Array.isArray(valor)) return valor;
+    if (valor && typeof valor === "object") {
+      const anidada = extraerLista(valor);
+      if (anidada.length) return anidada;
+    }
+  }
+  return [];
+};
+
+const normalizarEstudiantes = (datos: any, asumirEstudiante = false): any[] => {
+  const lista = extraerLista(datos);
+  if (!lista.length) return [];
+  const normalizados: any[] = [];
+  for (const original of lista) {
+    if (!original || typeof original !== "object") continue;
+    // Algunas APIs devuelven matrículas que contienen el usuario/estudiante anidado.
+    const item = original.estudiante || original.alumno || original.usuario || original;
+    const rol = rolNormalizado(item) || rolNormalizado(original);
+    const candidato = { ...original, ...item, rol: rol || item?.rol };
+    if (!esEstudiante(candidato, asumirEstudiante)) continue;
+    const id = idDe(candidato) || idDe(original) || String(candidato.codigo || candidato.documento || nombrePersona(candidato));
+    normalizados.push({ ...candidato, id, nombre: nombrePersona(candidato) });
+  }
+  return normalizados.filter((item, index, arr) => arr.findIndex((x) => String(x.id) === String(item.id)) === index);
+};
+
+const buscarEstudiantesGrupo = async (grupoId: string): Promise<any[]> => {
+  if (!grupoId) return [];
+  const grupo = grupos.value.find((g: any) => idDe(g) === String(grupoId));
+  const incrustados = normalizarEstudiantes(grupo?.estudiantes || grupo?.alumnos || grupo?.matriculas || grupo?.matrículas || [], true);
+  if (incrustados.length) return incrustados;
+
+  const token = obtenerToken();
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const id = encodeURIComponent(grupoId);
+  // Se prueban rutas comunes del backend; solo las rutas dedicadas permiten
+  // aceptar estudiantes sin campo de rol. Las rutas generales siempre se filtran por rol.
+  const rutas = [
+    { url: `/api/grupos/${id}/estudiantes`, dedicada: true },
+    { url: `/api/grupos/${id}/matriculas`, dedicada: true },
+    { url: `/api/matriculas?grupoId=${id}`, dedicada: true },
+    { url: `/api/estudiantes?grupoId=${id}`, dedicada: true },
+    { url: `/api/usuarios?rol=estudiante&grupoId=${id}`, dedicada: false },
+    { url: `/api/usuarios?tipoUsuario=estudiante&grupoId=${id}`, dedicada: false },
+    { url: `/api/usuarios?rol=estudiante`, dedicada: false },
+  ];
+  for (const ruta of rutas) {
+    try {
+      const respuesta = await fetch(ruta.url, { headers });
+      if (!respuesta.ok) continue;
+      const datos = await respuesta.json();
+      let lista = normalizarEstudiantes(datos, ruta.dedicada);
+      // Si el endpoint general no filtra en servidor, exige que el usuario
+      // pertenezca al grupo seleccionado cuando la respuesta incluye esa relación.
+      if (!ruta.dedicada && lista.length) {
+        lista = lista.filter((estudiante: any) => {
+          const gruposDelEstudiante = estudiante.grupos || estudiante.gruposIds || estudiante.matriculas || estudiante.matrículas;
+          if (!Array.isArray(gruposDelEstudiante) || !gruposDelEstudiante.length) return true;
+          return gruposDelEstudiante.some((g: any) => String(typeof g === "object" ? (g._id || g.id || g.grupoId) : g) === String(grupoId));
+        });
+      }
+      if (lista.length) return lista;
+    } catch {
+      // Si una ruta no existe o responde con un formato distinto, probar la siguiente.
+    }
+  }
+  return [];
+};
+
+const cargarEstudiantesParaCalificar = async () => {
+  estudiantesCalificaciones.value = [];
+  estudianteCalificacionId.value = "";
+  if (!grupoCalificacionesId.value) return;
+  const estudiantes = await buscarEstudiantesGrupo(grupoCalificacionesId.value);
+  if (!estudiantes.length) {
+    mostrarMensaje("No se encontraron estudiantes para este grupo. Comprueba que estén matriculados y que el backend exponga la lista de estudiantes del grupo.", "error");
+  }
+  const guardadas = leerLocal("calificaciones");
+  estudiantesCalificaciones.value = estudiantes.map((estudiante: any) => {
+    const anterior = guardadas.find((item: any) =>
+      item.estudianteId === estudiante.id &&
+      item.grupoId === grupoCalificacionesId.value &&
+      item.asignaturaId === asignaturaCalificacionesId.value &&
+      Number(item.periodo) === Number(periodoCalificaciones.value)
+    );
+    return { ...estudiante, nota: anterior?.nota ?? null, observacion: anterior?.observacion || "" };
+  });
+  if (!estudiantesCalificaciones.value.some((e: any) => String(e.id) === String(estudianteCalificacionId.value))) {
+    estudianteCalificacionId.value = "";
+  }
+};
+
+const guardarCalificaciones = async () => {
+  if (!grupoCalificacionesId.value || !asignaturaCalificacionesId.value) {
+    mostrarMensaje("Selecciona un grupo y una asignatura antes de guardar.", "error");
+    return;
+  }
+  if (!estudiantesCalificaciones.value.length) {
+    mostrarMensaje("No hay estudiantes cargados para calificar en este grupo.", "error");
+    return;
+  }
+  const invalidas = estudiantesCalificaciones.value.some((e: any) =>
+    e.nota !== null && e.nota !== "" && (Number(e.nota) < 0 || Number(e.nota) > 5)
+  );
+  if (invalidas) {
+    mostrarMensaje("Las calificaciones deben estar entre 0 y 5.", "error");
+    return;
+  }
+
+  guardandoCalificaciones.value = true;
+  const actuales = leerLocal("calificaciones");
+  const token = obtenerToken();
+  const payload = estudiantesCalificacionesVisibles.value.map((e: any) => ({
+    estudianteId: e.id,
+    estudianteNombre: e.nombre,
+    docenteId: usuario?.id || usuario?._id,
+    grupoId: grupoCalificacionesId.value,
+    asignaturaId: asignaturaCalificacionesId.value,
+    periodo: periodoCalificaciones.value,
+    nota: e.nota === "" ? null : e.nota,
+    observacion: e.observacion || "",
+    actualizadoEn: new Date().toISOString(),
+  }));
+  const fusionadas = [...actuales];
+  payload.forEach((item: any) => {
+    const index = fusionadas.findIndex((prev: any) =>
+      prev.estudianteId === item.estudianteId && prev.grupoId === item.grupoId &&
+      prev.asignaturaId === item.asignaturaId && Number(prev.periodo) === Number(item.periodo)
+    );
+    if (index >= 0) fusionadas[index] = item;
+    else fusionadas.push(item);
+  });
+
+  try {
+    let respuestaOk = false;
+    if (token) {
+      try {
+        const respuesta = await fetch("/api/calificaciones", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ calificaciones: payload }),
+        });
+        respuestaOk = respuesta.ok;
+      } catch { /* Se conserva en local si la API no responde. */ }
+    }
+    guardarLocal("calificaciones", fusionadas);
+    mostrarMensaje(respuestaOk ? "Calificaciones enviadas al servidor y guardadas." : "Calificaciones guardadas en este navegador. Verifica la conexión del backend para sincronizarlas.", "exito");
+  } finally {
+    guardandoCalificaciones.value = false;
+  }
+};
+
+const cargarEstudiantesAsistencia = async () => {
+  estudiantesAsistencia.value = [];
+  if (!grupoAsistenciaId.value) return;
+  const estudiantes = await buscarEstudiantesGrupo(grupoAsistenciaId.value);
+  const guardadas = leerLocal("asistencias");
+  estudiantesAsistencia.value = estudiantes.map((estudiante: any) => {
+    const anterior = guardadas.find((item: any) =>
+      item.estudianteId === estudiante.id && item.grupoId === grupoAsistenciaId.value && item.fecha === fechaAsistencia.value
+    );
+    return { ...estudiante, estado: anterior?.estado || "presente", nota: anterior?.nota || "" };
+  });
+};
+
+const guardarAsistencia = async () => {
+  if (!grupoAsistenciaId.value || !fechaAsistencia.value) {
+    mostrarMensaje("Selecciona un grupo y una fecha.", "error");
+    return;
+  }
+  if (!estudiantesAsistencia.value.length) {
+    mostrarMensaje("No hay estudiantes cargados para este grupo.", "error");
+    return;
+  }
+  guardandoAsistencia.value = true;
+  const actuales = leerLocal("asistencias");
+  const nuevos = estudiantesAsistencia.value.map((e: any) => ({
+    estudianteId: e.id, estudianteNombre: e.nombre,
+    docenteId: usuario?.id || usuario?._id,
+    grupoId: grupoAsistenciaId.value, fecha: fechaAsistencia.value,
+    estado: e.estado, nota: e.nota || "",
+  }));
+  const fusionadas = [...actuales];
+  nuevos.forEach((item: any) => {
+    const i = fusionadas.findIndex((old: any) => old.estudianteId === item.estudianteId && old.grupoId === item.grupoId && old.fecha === item.fecha);
+    if (i >= 0) fusionadas[i] = item; else fusionadas.push(item);
+  });
+  let remoto = false;
+  try {
+    const token = obtenerToken();
+    if (token) {
+      try {
+        const respuesta = await fetch("/api/asistencias", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ grupoId: grupoAsistenciaId.value, fecha: fechaAsistencia.value, asistencias: nuevos }),
+        });
+        remoto = respuesta.ok;
+      } catch { /* respaldo local */ }
+    }
+    guardarLocal("asistencias", fusionadas);
+    mostrarMensaje(remoto ? "Asistencia enviada al servidor y guardada." : "Asistencia guardada en este navegador. Verifica el backend para sincronizarla.", "exito");
+  } finally {
+    guardandoAsistencia.value = false;
+  }
+};
+
+const cargarEstudiantesObservacion = async () => {
+  nuevaObservacion.value.estudianteId = "";
+  estudiantesObservacion.value = await buscarEstudiantesGrupo(nuevaObservacion.value.grupoId);
+};
+
+const cargarObservaciones = async () => {
+  observaciones.value = leerLocal("observaciones");
+  const token = obtenerToken();
+  if (!token) return;
+  try {
+    const respuesta = await fetch("/api/observaciones", { headers: { Authorization: `Bearer ${token}` } });
+    if (!respuesta.ok) return;
+    const datos = await respuesta.json();
+    const lista = Array.isArray(datos) ? datos : datos?.observaciones || datos?.data || [];
+    if (lista.length) observaciones.value = lista.map((o: any) => ({ ...o, id: idDe(o) || o.id || `${Date.now()}-${Math.random()}` }));
+  } catch { /* se usan registros locales */ }
+};
+
+const crearObservacion = async () => {
+  const form = nuevaObservacion.value;
+  if (!form.grupoId || !form.estudianteId || !form.descripcion.trim()) {
+    mostrarMensaje("Selecciona el grupo, el estudiante y escribe la observación.", "error");
+    return;
+  }
+  const estudiante = estudiantesObservacion.value.find((e: any) => e.id === form.estudianteId);
+  const grupo = grupos.value.find((g: any) => idDe(g) === form.grupoId);
+  const item = {
+    id: `obs-${Date.now()}`, grupoId: form.grupoId,
+    grupoNombre: nombreElemento(grupo), estudianteId: form.estudianteId,
+    estudianteNombre: estudiante?.nombre || "Estudiante", tipo: form.tipo,
+    fecha: form.fecha, descripcion: form.descripcion.trim(),
+    docenteId: usuario?.id || usuario?._id,
+  };
+  let remoto = false;
+  const token = obtenerToken();
+  if (token) {
+    try {
+      const respuesta = await fetch("/api/observaciones", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(item),
+      });
+      remoto = respuesta.ok;
+    } catch { /* respaldo local */ }
+  }
+  observaciones.value.unshift(item);
+  guardarLocal("observaciones", observaciones.value);
+  mostrarFormularioObservacion.value = false;
+  nuevaObservacion.value = { grupoId: "", estudianteId: "", tipo: "academica", fecha: new Date().toISOString().slice(0, 10), descripcion: "" };
+  estudiantesObservacion.value = [];
+  mostrarMensaje(remoto ? "Observación guardada en el servidor." : "Observación guardada en este navegador.", "exito");
+};
+
+const eliminarObservacion = async (id: string) => {
+  observaciones.value = observaciones.value.filter((o: any) => o.id !== id && o._id !== id);
+  guardarLocal("observaciones", observaciones.value);
+  const token = obtenerToken();
+  if (token) {
+    try { await fetch(`/api/observaciones/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
+  }
+  mostrarMensaje("Observación eliminada de la lista.", "exito");
+};
+
+const cargarHorarios = async () => {
+  horarios.value = leerLocal("horarios");
+  const token = obtenerToken();
+  if (!token) return;
+  const rutas = [`/api/horarios/docente/${encodeURIComponent(String(usuario?.id || usuario?._id || ""))}`, "/api/horarios"];
+  for (const ruta of rutas) {
+    try {
+      const respuesta = await fetch(ruta, { headers: { Authorization: `Bearer ${token}` } });
+      if (!respuesta.ok) continue;
+      const datos = await respuesta.json();
+      const lista = Array.isArray(datos) ? datos : datos?.horarios || datos?.data || [];
+      if (lista.length) { horarios.value = lista.map((h: any) => ({ ...h, id: idDe(h) || h.id || `hor-${Date.now()}` })); return; }
+    } catch { /* probar ruta alternativa */ }
+  }
+};
+
+const crearHorario = async () => {
+  const h = nuevoHorario.value;
+  if (!h.grupoId || !h.asignaturaId || !h.inicio || !h.fin) {
+    mostrarMensaje("Completa grupo, asignatura y horas de la clase.", "error");
+    return;
+  }
+  if (h.fin <= h.inicio) {
+    mostrarMensaje("La hora de finalización debe ser posterior a la de inicio.", "error");
+    return;
+  }
+  const grupo = grupos.value.find((g: any) => idDe(g) === h.grupoId);
+  const asignatura = asignaturas.value.find((a: any) => idDe(a) === h.asignaturaId);
+  const item = {
+    id: `hor-${Date.now()}`, dia: h.dia, grupoId: h.grupoId,
+    grupoNombre: nombreElemento(grupo), asignaturaId: h.asignaturaId,
+    asignaturaNombre: nombreElemento(asignatura), inicio: h.inicio, fin: h.fin,
+    salon: h.salon.trim(), docenteId: usuario?.id || usuario?._id,
+  };
+  let remoto = false;
+  const token = obtenerToken();
+  if (token) {
+    try {
+      const respuesta = await fetch("/api/horarios", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(item),
+      });
+      remoto = respuesta.ok;
+    } catch { /* respaldo local */ }
+  }
+  horarios.value.push(item);
+  guardarLocal("horarios", horarios.value);
+  mostrarFormularioHorario.value = false;
+  nuevoHorario.value = { dia: "Lunes", grupoId: "", asignaturaId: "", inicio: "07:00", fin: "08:00", salon: "" };
+  mostrarMensaje(remoto ? "Clase guardada en el servidor." : "Clase guardada en este navegador.", "exito");
+};
+
+const eliminarHorario = async (id: string) => {
+  horarios.value = horarios.value.filter((h: any) => h.id !== id && h._id !== id);
+  guardarLocal("horarios", horarios.value);
+  const token = obtenerToken();
+  if (token) {
+    try { await fetch(`/api/horarios/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
+  }
+  mostrarMensaje("Clase eliminada del horario.", "exito");
+};
+
+const guardarPerfil = async () => {
+  if (!perfilEditado.value.nombres.trim() || !perfilEditado.value.email.trim()) {
+    mostrarMensaje("El nombre y el correo son obligatorios.", "error");
+    return;
+  }
+  guardandoPerfil.value = true;
+  try {
+    const actualizado = { ...(usuario || {}), ...perfilEditado.value };
+    let remoto = false;
+    const token = obtenerToken();
+    const id = usuario?.id || usuario?._id;
+    if (token && id) {
+      try {
+        const respuesta = await fetch(`/api/usuarios/${encodeURIComponent(String(id))}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(perfilEditado.value),
+        });
+        remoto = respuesta.ok;
+      } catch { /* se conserva localmente */ }
+    }
+    localStorage.setItem("usuario", JSON.stringify(actualizado));
+    mostrarMensaje(remoto ? "Perfil actualizado en el servidor." : "Perfil actualizado en este navegador. Verifica el backend para sincronizarlo.", "exito");
+  } finally {
+    guardandoPerfil.value = false;
+  }
+};
+
 /* =========================================================
    CARGA INICIAL
 ========================================================= */
 
+cargarDatosActividad();
 cargarActividades();
 cargarComunicados();
+cargarObservaciones();
+cargarHorarios();
 
 /* =========================================================
    CERRAR SESIÓN
 ========================================================= */
 
 const cerrarSesion = () => {
-  // Limpia la sesión en el store (y localStorage) para que el guard del router no rebote al portal.
-  authStore.cerrarSesion();
-  router.push("/login");
+  localStorage.removeItem("token");
+  localStorage.removeItem(
+    "usuario"
+  );
+  localStorage.removeItem(
+    "tipoPerfil"
+  );
+
+  router.push("/");
 };
 </script>
-
-<style>
-/* Global, solo con el portal docente montado */
-body.portal-docente,
-body.portal-docente #app {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-</style>
 
 <style scoped>
 /* =========================================================
@@ -3325,6 +3858,35 @@ body.portal-docente #app {
 
 .communication-content {
   flex: 1;
+  min-width: 0;
+}
+
+.communication-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.delete-communication-button {
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  padding: 8px 11px;
+  background: #fff;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.delete-communication-button:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.delete-communication-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .communication-title {
@@ -3837,5 +4399,101 @@ body.portal-docente #app {
     display: none;
   }
 }
+
+/* =========================================================
+   TABLAS Y FORMULARIOS DE LAS SECCIONES FUNCIONALES
+========================================================= */
+.data-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 8px 18px 20px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  color: #374151;
+  font-size: 12px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid #edf0f4;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  background: #f8faff;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.table-input {
+  width: 100%;
+  min-width: 95px;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: white;
+  color: #111827;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.table-input:focus {
+  outline: none;
+  border-color: #3861d0;
+}
+
+.inline-form-panel {
+  margin-bottom: 18px;
+}
+
+.profile-edit-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px;
+}
+
+.profile-edit-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-hint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.compact-button {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 750px) {
+  .profile-edit-panel {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .compact-button {
+    align-self: flex-start;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+  }
+}
 </style>
+
 
