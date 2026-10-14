@@ -3,7 +3,9 @@ defineProps({
   abierto: { type: Boolean, default: false },
   titulo: { type: String, default: 'Confirmar' },
   mensaje: { type: String, default: '' },
-  procesando: { type: Boolean, default: false }
+  procesando: { type: Boolean, default: false },
+  textoBoton: { type: String, default: 'Eliminar' },
+  textoProcesando: { type: String, default: 'Eliminando…' }
 })
 defineEmits(['cerrar', 'confirmar'])
 </script>
@@ -16,7 +18,7 @@ defineEmits(['cerrar', 'confirmar'])
       <div class="conf-acciones">
         <button type="button" class="btn-sec" @click="$emit('cerrar')">Cancelar</button>
         <button type="button" class="btn-peligro" :disabled="procesando" @click="$emit('confirmar')">
-          {{ procesando ? 'Eliminando…' : 'Eliminar' }}
+          {{ procesando ? textoProcesando : textoBoton }}
         </button>
       </div>
     </div>
