@@ -12,6 +12,7 @@ const routes = require("./src/routes");
 const { manejadorErrores, rutaNoEncontrada } = require("./src/middlewares/errorHandler");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 
 // Middlewares de seguridad y utilidad
@@ -27,8 +28,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Límite de intentos de login para mitigar fuerza bruta
 const limitadorLogin = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { mensaje: "Demasiados intentos de inicio de sesión. Intenta de nuevo en unos minutos." }
 });
 app.use("/api/auth/login", limitadorLogin);
