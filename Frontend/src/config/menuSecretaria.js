@@ -48,6 +48,7 @@ export const MENU_SECRETARIA = [
     { icono: '💳', icon: 'credit-card', titulo: 'Conceptos de cobro', ruta: '/secretaria/conceptos-contables', desc: 'Matrícula, pensión, derechos' }
   ] },
   { grupo: 'Documentos y control', items: [
+    { icono: '📋', icon: 'clipboard-check', titulo: 'Calificaciones por grado', ruta: '/secretaria/calificaciones-grado', desc: 'Notas por grado, grupo y periodo' },
     { icono: '📄', icon: 'file-text', titulo: 'Boletines y documentos', ruta: '/secretaria/documentos', desc: 'PDF de boletines, certificados…' },
     { icono: '🗃️', icon: 'archive', titulo: 'Bitácora', ruta: '/secretaria/bitacora', desc: 'Registro de actividad' }
   ] }
