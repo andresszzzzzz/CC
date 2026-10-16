@@ -4,6 +4,8 @@ import { MENU_SECRETARIA } from '@/config/menuSecretaria'
 
 // Login
 import LoginView from '../views/LoginView.vue'
+import RecuperarPassword from '../views/RecuperarPassword.vue'
+import RestablecerPassword from '../views/RestablecerPassword.vue'
 // router/index.js
 
 
@@ -93,6 +95,18 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
+    meta: { publica: true }
+  },
+  {
+    path: '/recuperar-password',
+    name: 'recuperar-password',
+    component: RecuperarPassword,
+    meta: { publica: true }
+  },
+  {
+    path: '/restablecer-password',
+    name: 'restablecer-password',
+    component: RestablecerPassword,
     meta: { publica: true }
   },
 
