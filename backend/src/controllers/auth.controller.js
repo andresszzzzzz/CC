@@ -155,7 +155,10 @@ const emitirEnlaceRecuperacion = async (usuario) => {
   );
 
   const enlace = `${urlFrontend()}/#/restablecer-password?token=${token}`; // el frontend usa rutas con #
-  await enviarRecuperacionPassword({ usuario, enlace, minutos: MINUTOS_TOKEN });
+  const r = await enviarRecuperacionPassword({ usuario, enlace, minutos: MINUTOS_TOKEN });
+  console.log('[RECUPERAR-PASSWORD] ' + (r && r.enviado
+    ? 'correo enviado a ' + enmascararEmail(usuario.email)
+    : 'NO enviado: SMTP no configurado (falta SMTP_HOST en Render)'));
   return true;
 };
 
@@ -181,11 +184,15 @@ const recuperarPassword = async (req, res) => {
     // limit(2): si un mismo "usuario" existe en varios colegios es ambiguo y no se envía nada.
     const candidatos = await Usuario.find(filtro).select('+credenciales.resetTokenExpira').limit(2);
 
-    if (candidatos.length === 1 && (await cuentaHabilitada(candidatos[0]))) {
+    if (candidatos.length !== 1) {
+      console.warn(`[RECUPERAR-PASSWORD] se encontraron ${candidatos.length} cuentas para ese dato (se necesita exactamente 1). No se envió nada.`);
+    } else if (!(await cuentaHabilitada(candidatos[0]))) {
+      console.warn('[RECUPERAR-PASSWORD] la cuenta o su institución está inactiva. No se envió nada.');
+    } else {
       // Sin await a propósito: así el tiempo de respuesta no delata si la cuenta existe.
-      emitirEnlaceRecuperacion(candidatos[0]).catch((e) =>
-        console.error('[RECUPERAR-PASSWORD]', e.message)
-      );
+      emitirEnlaceRecuperacion(candidatos[0])
+        .then((ok) => { if (!ok) console.warn('[RECUPERAR-PASSWORD] omitido: ya se envió un enlace hace menos de 1 minuto.'); })
+        .catch((e) => console.error('[RECUPERAR-PASSWORD] ERROR al enviar:', e.message));
     }
   } catch (error) {
     console.error('[RECUPERAR-PASSWORD]', error.message);
