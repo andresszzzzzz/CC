@@ -11,6 +11,7 @@ router.post('/restablecer-password', auth.restablecerPassword);
 // Requieren sesión
 router.post('/logout', verificarToken, auth.logout);
 router.get('/me', verificarToken, auth.me);
+router.put('/me', verificarToken, auth.actualizarPerfil);
 router.get('/cronograma', verificarToken, auth.cronograma);
 router.post('/cambiar-password', verificarToken, auth.cambiarPassword);
 router.post('/solicitar-restablecimiento', verificarToken, auth.solicitarRestablecimiento);

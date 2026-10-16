@@ -261,6 +261,30 @@ const me = async (req, res) => {
   }
 };
 
+// Actualiza los datos de contacto del propio usuario (no toca rol, institución ni contraseña)
+const CAMPOS_PERFIL = ['nombres', 'apellidos', 'email', 'telefono', 'direccion'];
+const actualizarPerfil = async (req, res) => {
+  try {
+    const datos = {};
+    for (const campo of CAMPOS_PERFIL) {
+      if (typeof req.body?.[campo] === 'string') datos[campo] = req.body[campo].trim();
+    }
+    if ('nombres' in datos && !datos.nombres) return res.status(400).json({ mensaje: 'Los nombres son obligatorios' });
+    if ('apellidos' in datos && !datos.apellidos) return res.status(400).json({ mensaje: 'Los apellidos son obligatorios' });
+    if ('email' in datos && !/^\S+@\S+\.\S+$/.test(datos.email)) return res.status(400).json({ mensaje: 'Ingresa un correo válido' });
+
+    const actualizado = await Usuario.findByIdAndUpdate(req.usuario.id, datos, { new: true, runValidators: true })
+      .populate('institucionId', 'nombre configuracion');
+
+    if (!actualizado) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    res.status(200).json(sinPassword(actualizado));
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ mensaje: 'Ese correo ya está en uso por otra cuenta' });
+    res.status(400).json({ mensaje: 'Error al actualizar el perfil', error: error.message });
+  }
+};
+
 // Cronograma del año académico activo de la institución del usuario
 const cronograma = async (req, res) => {
   try {
@@ -291,5 +315,6 @@ module.exports = {
   solicitarRestablecimiento,
   restablecerPassword,
   me,
+  actualizarPerfil,
   cronograma
 };
