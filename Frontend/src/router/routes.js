@@ -1,11 +1,15 @@
-
-
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { MENU_SECRETARIA } from '@/config/menuSecretaria'
 
 // Login
 import LoginView from '../views/LoginView.vue'
+// router/index.js
+
+
+
+
+
 
 // Importación de vistas de la carpeta 'acudiente'
 import InicioAcudiente from '../views/acudiente/InicioView.vue'
@@ -14,8 +18,7 @@ import AsistenciaAcudiente from '../views/acudiente/AsistenciaView.vue'
 import HorarioAcudiente from '../views/acudiente/HorarioView.vue'
 import ObservadorAcudiente from '../views/acudiente/ObservadorView.vue'
 import ComunicadosAcudiente from '../views/acudiente/ComunicadosView.vue'
-import RecuperarPassword from '@/views/RecuperarPassword.vue'
-import RestablecerPassword from '@/views/RestablecerPassword.vue'
+
 // Importación de vistas de la carpeta 'estudiante'
 import InicioEstudiante from '../views/estudiante/InicioView.vue'
 import CalificacionesEstudiante from '../views/estudiante/CalificacionesView.vue'
@@ -74,7 +77,6 @@ const vistasSecretaria = {
   'conceptos-contables': () => import('../views/secretaria/ConceptosContables.vue'),
   bitacora: () => import('../views/secretaria/Bitacora.vue')
 }
-
 const rutasSecretaria = Object.entries(vistasSecretaria).map(([ruta, component]) => ({
   path: `/secretaria/${ruta}`,
   name: `secretaria-${ruta}`,
@@ -92,18 +94,6 @@ const routes = [
     name: 'login',
     component: LoginView,
     meta: { publica: true }
-  },
-  {
-    path: '/recuperar-password',
-    name: 'recuperar-password',
-    component: () => import('../views/RecuperarPassword.vue'),
-    meta: { publica: true, abiertaConSesion: true }
-  },
-  {
-    path: '/restablecer-password',
-    name: 'restablecer-password',
-    component: () => import('../views/RestablecerPassword.vue'),
-    meta: { publica: true, abiertaConSesion: true }
   },
 
   // --- Rutas de Acudiente ---
@@ -145,13 +135,6 @@ const routes = [
   },
 
   // --- Rutas de Estudiante ---
-  {
-    path: '/perfil',
-    name: 'perfil',
-    component: () => import('../views/PerfilView.vue'),
-    meta: { rol: ['estudiante', 'acudiente', 'rector', 'admin', 'secretaria'] }
-  },
-
   {
     path: '/estudiante/inicio',
     name: 'estudiante-inicio',
@@ -384,7 +367,6 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (to.meta.publica) {
-    if (to.meta.abiertaConSesion) return true
     if (!auth.estaAutenticado) return true
     const inicio = inicioPorRol[auth.rol]
     if (!inicio) {
