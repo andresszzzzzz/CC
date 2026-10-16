@@ -34,12 +34,11 @@ const cargarDatos = async () => {
   try {
     cargando.value = true
     const resColegios = await nucleoService.listarInstituciones()
-    colegios.value = resColegios.data
+    colegios.value = resColegios.data || []
 
-    // Si implementaste listar secretarías en tu backend:
     try {
       const resSecs = await nucleoService.listarSecretarias()
-      secretarias.value = resSecs.data
+      secretarias.value = resSecs.data || []
     } catch {
       secretarias.value = []
     }
@@ -66,7 +65,7 @@ const abrirModalEditarColegio = (colegio) => {
     codigoDane: colegio.codigoDane || '',
     adminNombre: colegio.adminNombre || '',
     adminEmail: colegio.adminEmail || colegio.adminInicialEmail || '',
-    adminPassword: '', // Opcional o dejar vacío al editar
+    adminPassword: '',
     estado: colegio.estado || 'activo'
   }
   mostrarModalColegio.value = true
@@ -134,68 +133,97 @@ onMounted(() => {
 
 <template>
   <div class="nucleo-container">
-    <!-- Cabecera -->
+    <!-- Cabecera de la Vista -->
     <div class="header-section">
       <div>
-        <h2 class="title">Gestión de Instituciones y Personal 🏫</h2>
-        <p class="subtitle">Administra colegios, cuentas de secretaría, estados y edición de registros.</p>
+        <h2 class="title">Gestión de Instituciones del Núcleo</h2>
+        <p class="subtitle">Control y alta de colegios asignados, así como sus administradores iniciales.</p>
       </div>
       <div class="actions-row">
         <button @click="abrirModalCrearSecretaria" class="btn-secondary">+ Nueva Secretaría</button>
-        <button @click="abrirModalCrearColegio" class="btn-primary">+ Nueva Institución</button>
+        <button @click="abrirModalCrearColegio" class="btn-primary">+ Registrar Nuevo Colegio</button>
       </div>
     </div>
 
+    <!-- TARJETAS DE MÉTRICAS SUPERIORES -->
+    <section class="tarjetas-resumen">
+      <div class="tarjeta-stat">
+        <div class="stat-icono stat-icono--azul"><i class="bi bi-building"></i></div>
+        <div class="stat-cuerpo">
+          <p class="stat-label">Instituciones Registradas</p>
+          <h2 class="stat-valor">{{ colegios.length }}</h2>
+        </div>
+      </div>
+      <div class="tarjeta-stat">
+        <div class="stat-icono stat-icono--verde"><i class="bi bi-people"></i></div>
+        <div class="stat-cuerpo">
+          <p class="stat-label">Secretarías Activas</p>
+          <h2 class="stat-valor">{{ secretarias.filter(s => s.estado !== 'inactivo').length }}</h2>
+        </div>
+      </div>
+    </section>
+
     <!-- Estado de Carga -->
-    <div v-if="cargando" style="text-align: center; padding: 3rem; color: #64748b;">
+    <div v-if="cargando" class="estado-carga">
       Cargando información del núcleo...
     </div>
 
-    <!-- LISTADO DE INSTITUCIONES -->
-    <div v-else>
-      <h3 style="font-size: 1.125rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem;">Colegios Asociados</h3>
-      <div class="grid-cards" style="margin-bottom: 2.5rem;">
-        <div v-for="colegio in colegios" :key="colegio._id || colegio.id" class="card">
-          <div class="card-header">
-            <span class="icon">🏫</span>
-            <span :class="['badge', colegio.estado === 'inactivo' ? 'inactivo' : 'activo']">
-              {{ colegio.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
-            </span>
-          </div>
-          <h3>{{ colegio.nombre }}</h3>
-          <p class="subtitle">DANE: {{ colegio.codigoDane || 'No registrado' }}</p>
-          
-          <div class="card-footer">
-            <p class="label">Admin inicial:</p>
-            <p class="value">{{ colegio.adminEmail || colegio.adminInicialEmail || 'N/D' }}</p>
-            <button @click="abrirModalEditarColegio(colegio)" class="btn-edit">✏️ Editar Institución</button>
+    <!-- CONTENIDO PRINCIPAL -->
+    <template v-else>
+      <!-- LISTADO DE INSTITUCIONES -->
+      <section class="grupo-menu">
+        <h3 class="seccion-titulo">Colegios Asociados</h3>
+        <div v-if="colegios.length === 0" class="estado-carga">
+          No hay instituciones registradas todavía.
+        </div>
+        <div v-else class="lista-menu">
+          <div v-for="colegio in colegios" :key="colegio._id || colegio.id" class="item-menu-box">
+            <div class="item-info-left">
+              <span class="item-icono">🏫</span>
+              <div class="item-textos">
+                <b>{{ colegio.nombre }}</b>
+                <small>NIT: {{ colegio.nit || 'N/D' }} — DANE: {{ colegio.codigoDane || 'No registrado' }} — Usuarios: {{ colegio.usuarios || 2 }}</small>
+              </div>
+            </div>
+            <div class="item-acciones-right">
+              <span :class="['badge', colegio.estado === 'inactivo' ? 'inactivo' : 'activo']">
+                {{ colegio.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
+              </span>
+              <button @click="abrirModalEditarColegio(colegio)" class="btn-editar-link" title="Editar Institución">
+                Editar
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- LISTADO DE SECRETARÍAS -->
-      <h3 style="font-size: 1.125rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem;">Personal de Secretaría Registrado</h3>
-      <div v-if="secretarias.length === 0" style="background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; text-align: center; color: #64748b; font-size: 0.875rem;">
-        No hay cuentas de secretaría registradas o cargadas todavía.
-      </div>
-      <div v-else class="grid-cards">
-        <div v-for="sec in secretarias" :key="sec._id || sec.id" class="card">
-          <div class="card-header">
-            <span class="icon" style="background: #fef3c7; color: #d97706;">👩‍💻</span>
-            <span :class="['badge', sec.estado === 'inactivo' ? 'inactivo' : 'activo']">
-              {{ sec.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
-            </span>
-          </div>
-          <h3>{{ sec.nombre }}</h3>
-          <p class="subtitle">{{ sec.email }}</p>
-          
-          <div class="card-footer">
-            <p class="label">Teléfono: {{ sec.telefono || 'No registrado' }}</p>
-            <button @click="abrirModalEditarSecretaria(sec)" class="btn-edit">✏️ Editar Perfil</button>
+      <section class="grupo-menu" style="margin-top: 2rem;">
+        <h3 class="seccion-titulo">Personal de Secretaría Registrado</h3>
+        <div v-if="secretarias.length === 0" class="estado-carga">
+          No hay cuentas de secretaría registradas o cargadas todavía.
+        </div>
+        <div v-else class="lista-menu">
+          <div v-for="sec in secretarias" :key="sec._id || sec.id" class="item-menu-box">
+            <div class="item-info-left">
+              <span class="item-icono amber">👤</span>
+              <div class="item-textos">
+                <b>{{ sec.nombre }}</b>
+                <small>{{ sec.email }} — Tel: {{ sec.telefono || 'No registrado' }}</small>
+              </div>
+            </div>
+            <div class="item-acciones-right">
+              <span :class="['badge', sec.estado === 'inactivo' ? 'inactivo' : 'activo']">
+                {{ sec.estado === 'inactivo' ? 'Inactivo' : 'Activo' }}
+              </span>
+              <button @click="abrirModalEditarSecretaria(sec)" class="btn-editar-link" title="Editar Perfil">
+                Editar
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </template>
 
     <!-- MODAL: CREAR / EDITAR INSTITUCIÓN -->
     <div v-if="mostrarModalColegio" class="modal-overlay" @click.self="mostrarModalColegio = false">
@@ -293,82 +321,197 @@ onMounted(() => {
 .nucleo-container {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
 }
+
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
-.title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0; }
-.subtitle { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; }
-.actions-row { display: flex; gap: 0.75rem; }
 
-.grid-cards {
+.title { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0; }
+.subtitle { font-size: 0.85rem; color: #64748b; margin-top: 0.2rem; }
+.actions-row { display: flex; gap: 0.75rem; align-items: center; }
+
+/* Tarjetas de Métricas */
+.tarjetas-resumen {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
-.card {
+
+.tarjeta-stat {
   background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.stat-icono {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.stat-icono--azul { background: #dbeafe; color: #2563eb; }
+.stat-icono--verde { background: #dcfce7; color: #16a34a; }
+.stat-label { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+.stat-valor { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; }
+
+.estado-carga {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+/* Estilo de filas y elementos modernos */
+.grupo-menu { margin-bottom: 24px; }
+.seccion-titulo { font-size: 16px; color: #0f172a; font-weight: 700; margin-bottom: 12px; }
+
+.lista-menu {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.item-menu-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
 }
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-.icon {
-  background: #eff6ff; color: #2563eb; padding: 0.5rem; border-radius: 0.5rem; font-size: 1.25rem;
+
+.item-menu-box:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.06);
 }
+
+.item-info-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.item-icono {
+  background: #eff6ff;
+  color: #2563eb;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.item-icono.amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.item-textos b {
+  display: block;
+  font-size: 14.5px;
+  color: #0f172a;
+  margin-bottom: 3px;
+}
+
+.item-textos small {
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.item-acciones-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .badge {
-  font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .badge.activo { background: #ecfdf5; color: #047857; }
 .badge.inactivo { background: #fef2f2; color: #b91c1c; }
 
-.card h3 { font-size: 1.125rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0; }
-.card .subtitle { font-size: 0.75rem; color: #94a3b8; margin: 0; }
-
-.card-footer {
-  margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 0.5rem;
+.btn-editar-link {
+  background: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
 }
-.label { font-size: 0.75rem; color: #64748b; margin: 0; word-break: break-all; }
-.value { font-size: 0.75rem; font-weight: 600; color: #0f172a; margin: 0; }
 
-.btn-edit {
-  background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; padding: 0.35rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; margin-top: 0.5rem; transition: background 0.2s;
+.btn-editar-link:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
-.btn-edit:hover { background: #f1f5f9; }
 
 .btn-primary {
-  background-color: #2563eb; color: white; border: none; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem; cursor: pointer;
+  background-color: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background 0.2s;
 }
 .btn-primary:hover { background-color: #1d4ed8; }
+
 .btn-secondary {
-  background-color: white; color: #4b5563; border: 1px solid #cbd5e1; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.875rem; cursor: pointer;
+  background-color: white; color: #4b5563; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 12px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: background 0.2s;
 }
-.btn-secondary:hover { background-color: #f8fafc; }
+.btn-secondary:hover { background-color: #f8fafc; color: #1f2937; }
 
 /* Modales */
 .modal-overlay {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 1rem;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 1rem;
 }
+
 .modal-content {
-  background: white; border-radius: 1rem; width: 100%; max-width: 500px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;
+  background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;
 }
-.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
-.modal-header h2 { font-size: 1.125rem; font-weight: 700; color: #0f172a; margin: 0; }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px; }
+.modal-header h2 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
-.form-grid { display: flex; flex-direction: column; gap: 1rem; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
-.form-group label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #475569; }
-.form-group input, .form-select { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.625rem 0.75rem; font-size: 0.875rem; outline: none; background: white; }
+
+.form-grid { display: flex; flex-direction: column; gap: 12px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; }
+.form-group input, .form-select { border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; outline: none; background: white; }
 .form-group input:focus, .form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
 </style>
