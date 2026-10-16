@@ -40,7 +40,11 @@ const enviar = async () => {
     <!-- PANEL DE MARCA -->
     <section class="brand-panel">
       <div class="brand-logo-lg">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h12M6 10h12"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+          <path d="M6 6h12M6 10h12" />
+        </svg>
       </div>
       <h1>EasyNotes</h1>
       <p class="brand-sub">Sistema de gestión académica</p>
@@ -75,7 +79,9 @@ const enviar = async () => {
           </button>
         </form>
 
-        <p class="login-help">¿Olvidaste tu contraseña? Comunícate con la institución.</p>
+        <p class="login-help">
+          <router-link to="/recuperar-password" class="login-link">¿Olvidaste tu contraseña?</router-link>
+        </p>
 
       </div>
     </section>
@@ -112,8 +118,16 @@ const enviar = async () => {
   margin-bottom: 24px;
 }
 
-.brand-panel h1 { font-size: 30px; font-weight: 800; }
-.brand-sub { font-size: 13px; color: #bfdbfe; margin-top: 6px; }
+.brand-panel h1 {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.brand-sub {
+  font-size: 13px;
+  color: #bfdbfe;
+  margin-top: 6px;
+}
 
 .brand-list {
   list-style: none;
@@ -122,6 +136,7 @@ const enviar = async () => {
   flex-direction: column;
   gap: 12px;
 }
+
 .brand-list li {
   font-size: 13px;
   color: #dbeafe;
@@ -149,8 +164,17 @@ const enviar = async () => {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.login-card h2 { font-size: 19px; color: #0f172a; font-weight: 700; }
-.login-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+.login-card h2 {
+  font-size: 19px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.login-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
 
 .login-form {
   display: flex;
@@ -159,8 +183,19 @@ const enviar = async () => {
   margin-top: 24px;
 }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .field input {
   border: 1px solid #e2e8f0;
   background: #f8fafc;
@@ -170,7 +205,11 @@ const enviar = async () => {
   color: #0f172a;
   outline: none;
 }
-.field input:focus { border-color: #2563eb; background: white; }
+
+.field input:focus {
+  border-color: #2563eb;
+  background: white;
+}
 
 .login-error {
   background: #fef2f2;
@@ -191,15 +230,42 @@ const enviar = async () => {
   font-weight: 700;
   cursor: pointer;
 }
-.btn-primary:disabled { opacity: 0.7; cursor: default; }
 
-.login-help { font-size: 11px; color: #94a3b8; margin-top: 16px; text-align: center; }
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
 
+.login-help {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.login-link {
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
 
 @media (max-width: 900px) {
-  .login-layout { flex-direction: column; }
-  .brand-panel { width: 100%; padding: 32px 24px; }
-  .brand-list { display: none; }
+  .login-layout {
+    flex-direction: column;
+  }
+
+  .brand-panel {
+    width: 100%;
+    padding: 32px 24px;
+  }
+
+  .brand-list {
+    display: none;
+  }
 }
 </style>
- 
