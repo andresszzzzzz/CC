@@ -154,7 +154,7 @@ const emitirEnlaceRecuperacion = async (usuario) => {
     }
   );
 
-  const enlace = `${urlFrontend()}/restablecer-password?token=${token}`;
+  const enlace = `${urlFrontend()}/#/restablecer-password?token=${token}`; // el frontend usa rutas con #
   await enviarRecuperacionPassword({ usuario, enlace, minutos: MINUTOS_TOKEN });
   return true;
 };
