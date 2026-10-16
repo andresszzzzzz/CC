@@ -4,7 +4,7 @@ const gradoSchema = new mongoose.Schema({
   institucionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institucion', required: true },
   nombre: { type: String, required: true, trim: true },
   numero: { type: Number, required: true, min: 0, max: 13 }, // 0 = transición ... 11 = once
-  cicloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Ciclo', required: true },
+  cicloId: { type: mongoose.Schema.Types.ObjectId, ref: 'Ciclo', default: null }, // opcional: el colegio puede no usar ciclos
   estado: { type: String, enum: ['activo', 'inactivo'], default: 'activo' }
 }, { timestamps: true });
 

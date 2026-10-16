@@ -85,7 +85,9 @@ export const documentosApi = {
 // Desactivar en vez de eliminar: conserva todo el historial del usuario.
 export const conDesactivacion = (recurso) => ({
   ...recurso,
-  eliminar: (id) => recurso.actualizar(id, { estado: 'inactivo' })
+  eliminar: (id) => recurso.actualizar(id, { estado: 'inactivo' }),
+  // El borrado real sigue disponible: CrudView lo usa solo cuando el registro ya está inactivo.
+  eliminarDefinitivo: (id) => recurso.eliminar(id)
 })
 export const TEXTOS_DESACTIVAR = {
   tituloEliminar: 'Desactivar',

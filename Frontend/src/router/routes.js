@@ -57,6 +57,7 @@ const vistasSecretaria = {
   asignaturas: () => import('../views/secretaria/Asignaturas.vue'),
   asignacion: () => import('../views/secretaria/AsignacionAcademica.vue'),
   calificacion: () => import('../views/secretaria/SistemaCalificacion.vue'),
+  'calificaciones-grado': () => import('../views/secretaria/calificaciones.vue'),
   'estudiantes/ficha': () => import('../views/secretaria/EstudianteFicha.vue'),
   matriculas: () => import('../views/secretaria/Matriculas.vue'),
   'personas-roles': () => import('../views/secretaria/PersonasRoles.vue'),

@@ -40,6 +40,23 @@ const confirmAbierto = ref(false)
 const aEliminar = ref(null)
 const eliminando = ref(false)
 
+// ¿Este recurso maneja activo/inactivo? Se detecta por el campo «estado» del formulario.
+const modoEstado = computed(() => props.campos.some((c) => c.key === 'estado' && Array.isArray(c.opciones) &&
+  c.opciones.some((o) => o.value === 'activo') && c.opciones.some((o) => o.value === 'inactivo')))
+const accion = ref('eliminar') // 'desactivar' | 'eliminar'
+const errorAccion = ref('')
+const textosDialogo = computed(() => {
+  if (accion.value === 'desactivar') {
+    return { titulo: `Desactivar ${props.nombreItem}`, boton: 'Desactivar', procesando: 'Desactivando…',
+      mensaje: 'Quedará inactivo, pero sus datos y su historial se conservan. Podrás activarlo de nuevo cuando quieras. Para eliminarlo definitivamente primero debe estar desactivado.' }
+  }
+  if (modoEstado.value) {
+    return { titulo: `Eliminar ${props.nombreItem} definitivamente`, boton: 'Eliminar', procesando: 'Eliminando…',
+      mensaje: 'Esta acción no se puede deshacer. Si el registro ya se usa en otros módulos, el sistema no permitirá eliminarlo.' }
+  }
+  return { titulo: props.tituloEliminar, mensaje: props.mensajeEliminar, boton: 'Eliminar', procesando: 'Eliminando…' }
+})
+
 async function cargar() {
   cargando.value = true
   error.value = ''
@@ -103,19 +120,42 @@ async function guardar(valores) {
   }
 }
 
-function pedirEliminar(fila) {
+function pedirDesactivar(fila) {
+  accion.value = 'desactivar'
   aEliminar.value = fila
   confirmAbierto.value = true
+}
+function pedirEliminar(fila) {
+  // En tablas con activo/inactivo nunca se elimina un registro que sigue activo: primero se desactiva
+  if (modoEstado.value && fila.estado !== 'inactivo') return pedirDesactivar(fila)
+  accion.value = 'eliminar'
+  aEliminar.value = fila
+  confirmAbierto.value = true
+}
+async function activar(fila) {
+  errorAccion.value = ''
+  try {
+    await props.recurso.actualizar(fila._id, { estado: 'activo' })
+    await cargar()
+  } catch (e) {
+    errorAccion.value = e.response?.data?.mensaje || 'No se pudo activar el registro.'
+  }
 }
 async function confirmarEliminar() {
   if (!aEliminar.value) return
   eliminando.value = true
+  errorAccion.value = ''
   try {
-    await props.recurso.eliminar(aEliminar.value._id)
+    if (accion.value === 'desactivar') {
+      await props.recurso.actualizar(aEliminar.value._id, { estado: 'inactivo' })
+    } else {
+      // eliminarDefinitivo existe cuando el recurso viene envuelto con conDesactivacion()
+      await (props.recurso.eliminarDefinitivo || props.recurso.eliminar)(aEliminar.value._id)
+    }
     confirmAbierto.value = false
     await cargar()
   } catch (e) {
-    error.value = e.response?.data?.mensaje || 'No se pudo eliminar el registro.'
+    errorAccion.value = e.response?.data?.mensaje || (accion.value === 'desactivar' ? 'No se pudo desactivar el registro.' : 'No se pudo eliminar el registro.')
     confirmAbierto.value = false
   } finally {
     eliminando.value = false
@@ -141,15 +181,20 @@ const camposActivos = computed(() =>
       <p>{{ subtitulo }}</p>
     </template>
 
+    <div v-if="errorAccion" class="aviso-error">{{ errorAccion }}</div>
+
     <DataTable
       :columns="columnas"
       :rows="filas"
       :cargando="cargando"
       :error="error"
       :solo-lectura="soloLectura"
+      :modo-estado="modoEstado"
       @crear="abrirCrear"
       @editar="abrirEditar"
       @eliminar="pedirEliminar"
+      @desactivar="pedirDesactivar"
+      @activar="activar"
     />
 
     <FormModal
@@ -167,11 +212,17 @@ const camposActivos = computed(() =>
     <ConfirmDialog
       v-if="!soloLectura"
       :abierto="confirmAbierto"
-      :titulo="tituloEliminar"
-      :mensaje="mensajeEliminar"
+      :titulo="textosDialogo.titulo"
+      :mensaje="textosDialogo.mensaje"
+      :texto-boton="textosDialogo.boton"
+      :texto-procesando="textosDialogo.procesando"
       :procesando="eliminando"
       @cerrar="confirmAbierto = false"
       @confirmar="confirmarEliminar"
     />
   </AppLayout>
 </template>
+
+<style scoped>
+.aviso-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+</style>

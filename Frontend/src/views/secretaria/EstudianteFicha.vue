@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import EstadoBadge from '@/components/admin/EstadoBadge.vue'
 import ImageUploader from '@/components/admin/ImageUploader.vue'
@@ -9,7 +9,7 @@ import { useContextoInstitucional } from '@/composables/useContextoInstitucional
 import '@/styles/secretaria-ui.css'
 
 const { nombrePersona, institucionId } = useCatalogos()
-const { anioActivo } = useContextoInstitucional()
+const { anios, anioActivo, cargarAnios } = useContextoInstitucional()
 const q = ref(''), resultados = ref([]), ficha = ref(null), error = ref(''), msg = ref('')
 
 async function buscar() {
@@ -22,9 +22,22 @@ async function abrir(e) {
   try { ficha.value = (await estudiantesApi.ficha(e._id)).data } catch { error.value = 'No se pudo cargar la ficha.' }
 }
 const est = computed(() => ficha.value?.estudiante || {})
+// Año escolar que se está consultando (por defecto el activo)
+const anioSel = ref('')
+const anioId = computed(() => anioSel.value || anioActivo.value?._id || '')
+const anioTexto = computed(() => (anios.value || []).find((a) => a._id === anioId.value)?.anio || '')
+onMounted(cargarAnios)
+
+// Matrículas del año elegido que siguen vigentes (las canceladas no cuentan)
+const matriculasDelAnio = computed(() =>
+  (ficha.value?.matriculas || []).filter((m) => m.anioAcademicoId === anioId.value && m.estado !== 'cancelada'))
+// Si hubiera más de una, se prefiere la «matriculado»; el aviso de abajo le dice a Secretaría que hay un error de datos
+const matriculaSel = computed(() => matriculasDelAnio.value.find((m) => m.estado === 'matriculado') || matriculasDelAnio.value[0] || null)
+const hayDuplicadas = computed(() => matriculasDelAnio.value.filter((m) => m.estado === 'matriculado').length > 1)
+
 const situacion = computed(() => {
   if (est.value.estado === 'inactivo') return 'inactivo'
-  const m = ficha.value?.matriculaActual
+  const m = matriculaSel.value
   if (m?.estado === 'matriculado') return 'matriculado'
   if (m?.estado === 'retirado') return 'retirado'
   return (ficha.value?.matriculas || []).length ? 'no matriculado' : 'registrado'
@@ -55,12 +68,26 @@ async function alternarEstado() {
           <ImageUploader v-model="est.foto" tipo="estudiante" :extra="{ personaId: est._id }" etiqueta="Fotografía" :contener="false" :altura="220" />
           <div>
             <h3 style="font-size:18px">{{ nombrePersona(est) }}</h3>
-            <p class="sec-ayuda">Documento {{ est.documento }} · {{ est.correo || 'sin correo' }}</p>
+            <p class="sec-ayuda">Documento {{ est.documento }} · {{ est.email || 'sin correo' }}</p>
             <div class="sec-fila">
               <EstadoBadge :estado="situacion" />
               <span class="sec-chip">Registrado: Sí</span>
-              <span class="sec-chip">Matriculado {{ anioActivo?.anio || '' }}: {{ ficha.matriculaActual ? 'Sí' : 'No' }}</span>
-              <span v-if="ficha.matriculaActual" class="sec-chip">{{ ficha.matriculaActual.gradoNombre }} · {{ ficha.matriculaActual.grupoNombre }} · {{ ficha.matriculaActual.jornadaNombre }}</span>
+              <span class="sec-chip">Matriculado {{ anioTexto }}: {{ matriculaSel ? 'Sí' : 'No' }}</span>
+            </div>
+            <div class="sec-fila" style="margin:10px 0">
+              <label class="sec-campo" style="max-width:200px">Año escolar
+                <select v-model="anioSel">
+                  <option value="">Año actual{{ anioActivo ? ` (${anioActivo.anio})` : '' }}</option>
+                  <option v-for="a in anios" :key="a._id" :value="a._id">{{ a.anio }}</option>
+                </select>
+              </label>
+            </div>
+            <div v-if="hayDuplicadas" class="sec-msg sec-msg--err">Este estudiante tiene más de una matrícula activa en {{ anioTexto }}. Revísalo en Matrículas: solo debe haber una.</div>
+            <div v-if="matriculaSel" class="sec-fila">
+              <span class="sec-chip">Grado: {{ matriculaSel.gradoNombre || '—' }}</span>
+              <span class="sec-chip">Grupo: {{ matriculaSel.grupoNombre || '—' }}</span>
+              <span class="sec-chip">Jornada: {{ matriculaSel.jornadaNombre || '—' }}</span>
+              <span class="sec-chip">Matrícula N.º {{ matriculaSel.numeroMatricula }}</span>
             </div>
             <button class="sec-btn sec-btn--sec" style="margin-top:14px" @click="alternarEstado">{{ est.estado === 'inactivo' ? 'Reactivar estudiante' : 'Desactivar estudiante' }}</button>
             <h3 style="margin-top:18px">Acudientes</h3>
@@ -78,8 +105,8 @@ async function alternarEstado() {
       <section class="sec-panel">
         <h3>Historial académico</h3>
         <p v-if="!(ficha.historialAcademico || []).length" class="sec-vacio">Aún no hay notas registradas.</p>
-        <table v-else class="sec-tabla"><thead><tr><th>Año</th><th>Grado</th><th>Nota final</th><th>Desempeño</th><th>Resultado</th></tr></thead>
-          <tbody><tr v-for="h in ficha.historialAcademico" :key="h.anio + h.gradoNombre"><td>{{ h.anio }}</td><td>{{ h.gradoNombre }}</td><td>{{ h.notaFinal }}</td><td>{{ h.desempeno }}</td><td>{{ h.resultado }}</td></tr></tbody></table>
+        <table v-else class="sec-tabla"><thead><tr><th>Año</th><th>Grado</th><th>Grupo</th><th>Matrícula</th><th>Promedio</th></tr></thead>
+          <tbody><tr v-for="h in ficha.historialAcademico" :key="h.anioAcademicoId + h.grado"><td>{{ h.anio }}</td><td>{{ h.grado }}</td><td>{{ h.grupo }}</td><td><EstadoBadge :estado="h.estadoMatricula" /></td><td>{{ h.promedio ?? 'Sin notas' }}</td></tr></tbody></table>
       </section>
     </template>
   </AppLayout>

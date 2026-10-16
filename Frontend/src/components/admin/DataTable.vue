@@ -7,9 +7,11 @@ const props = defineProps({
   rows: { type: Array, default: () => [] },
   cargando: { type: Boolean, default: false },
   error: { type: String, default: '' },
-  soloLectura: { type: Boolean, default: false }
+  soloLectura: { type: Boolean, default: false },
+  // true = la tabla maneja activo/inactivo: primero se desactiva y solo entonces se puede activar o eliminar
+  modoEstado: { type: Boolean, default: false }
 })
-defineEmits(['crear', 'editar', 'eliminar'])
+defineEmits(['crear', 'editar', 'eliminar', 'desactivar', 'activar'])
 
 const busqueda = ref('')
 
@@ -68,7 +70,7 @@ const filas = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="fila in filas" :key="fila._id">
+          <tr v-for="fila in filas" :key="fila._id" :class="{ 'fila-inactiva': modoEstado && fila.estado === 'inactivo' }">
             <td v-for="col in columns" :key="col.key">
               <span
                 v-if="col.key === 'estado' && fila.estado"
@@ -82,9 +84,23 @@ const filas = computed(() => {
               <button class="icono-btn" title="Editar" @click="$emit('editar', fila)">
                 <AppIcon name="edit-3" :size="16" />
               </button>
-              <button class="icono-btn peligro" title="Eliminar" @click="$emit('eliminar', fila)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-              </button>
+              <!-- Tabla sin activo/inactivo: la papelera elimina como antes -->
+              <template v-if="!modoEstado">
+                <button class="icono-btn peligro" title="Eliminar" @click="$emit('eliminar', fila)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                </button>
+              </template>
+              <!-- Registro activo: la papelera DESACTIVA -->
+              <template v-else-if="fila.estado !== 'inactivo'">
+                <button class="icono-btn peligro" title="Desactivar" @click="$emit('desactivar', fila)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                </button>
+              </template>
+              <!-- Registro inactivo: ahora sí se puede activar de nuevo o eliminar -->
+              <template v-else>
+                <button class="txt-btn ok" title="Volver a activar" @click="$emit('activar', fila)">Activar</button>
+                <button class="txt-btn bad" title="Eliminar definitivamente" @click="$emit('eliminar', fila)">Eliminar</button>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -119,4 +135,8 @@ const filas = computed(() => {
 .icono-btn { background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; }
 .icono-btn:hover { background: #eff6ff; color: #2563eb; }
 .icono-btn.peligro:hover { background: #fef2f2; color: #dc2626; }
+.fila-inactiva td { color: #94a3b8; }
+.txt-btn { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 6px 10px; margin-left: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.txt-btn.ok { color: #15803d; } .txt-btn.ok:hover { background: #dcfce7; }
+.txt-btn.bad { color: #b91c1c; } .txt-btn.bad:hover { background: #fee2e2; }
 </style>

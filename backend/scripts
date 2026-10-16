@@ -1,0 +1,90 @@
+// backend/scripts/auditoriaCiclos.js
+// AUDITORÍA DE SOLO LECTURA: no modifica ni borra nada. Revisa ciclos, grados, grupos y matrículas
+// y lista los datos que no cuadran, para corregirlos ANTES de aplicar reglas más estrictas.
+// Uso (desde la carpeta backend):  node scripts/auditoriaCiclos.js
+require('dotenv').config();
+const mongoose = require('mongoose');
+
+const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const rangoDe = (c) => (c.gradoDesde != null && c.gradoHasta != null ? [Number(c.gradoDesde), Number(c.gradoHasta)] : null);
+const seCruzan = (a, b) => !!a && !!b && a[0] <= b[1] && b[0] <= a[1];
+const porInstitucion = (lista) => lista.reduce((m, x) => { const k = String(x.institucionId); (m[k] = m[k] || []).push(x); return m; }, {});
+
+function repetidos(lista, clave) {
+  const m = {};
+  lista.forEach((x) => { const k = norm(x[clave]); (m[k] = m[k] || []).push(x); });
+  return Object.values(m).filter((g) => g.length > 1);
+}
+
+// Recibe los datos ya leídos y devuelve la lista de hallazgos (texto). No toca la base de datos.
+function analizar({ ciclos, grados, grupos, matriculas }) {
+  const hallazgos = [];
+  const add = (inst, tipo, texto) => hallazgos.push({ inst, tipo, texto });
+  const C = porInstitucion(ciclos), G = porInstitucion(grados), Gr = porInstitucion(grupos), M = porInstitucion(matriculas);
+  const insts = new Set([...Object.keys(C), ...Object.keys(G), ...Object.keys(Gr), ...Object.keys(M)]);
+
+  insts.forEach((inst) => {
+    const cs = C[inst] || [], gs = G[inst] || [], grps = Gr[inst] || [], ms = M[inst] || [];
+    const ciclosPorId = Object.fromEntries(cs.map((c) => [String(c._id), c]));
+    const gradosPorId = Object.fromEntries(gs.map((g) => [String(g._id), g]));
+    const gruposPorId = Object.fromEntries(grps.map((g) => [String(g._id), g]));
+
+    repetidos(cs, 'nombre').forEach((g) => add(inst, 'CICLO REPETIDO', `Nombre repetido: ${g.map((c) => `«${c.nombre}» (${c._id})`).join(' / ')}`));
+    const activos = cs.filter((c) => c.estado !== 'inactivo');
+    activos.forEach((a, i) => activos.slice(i + 1).forEach((b) => {
+      if (seCruzan(rangoDe(a), rangoDe(b))) add(inst, 'CICLOS CRUZADOS', `«${a.nombre}» (${rangoDe(a).join('–')}) se cruza con «${b.nombre}» (${rangoDe(b).join('–')})`);
+    }));
+
+    repetidos(gs, 'nombre').forEach((g) => add(inst, 'GRADO REPETIDO', `Nombre repetido: ${g.map((x) => `«${x.nombre}» (n.º ${x.numero})`).join(' / ')}`));
+    gs.forEach((g) => {
+      const c = g.cicloId ? ciclosPorId[String(g.cicloId)] : null;
+      if (!g.cicloId) add(inst, 'INFO: GRADO SIN CICLO', `«${g.nombre}» (n.º ${g.numero}) no tiene ciclo (es válido si el colegio no usa ciclos)`);
+      else if (!c) add(inst, 'GRADO CON CICLO INEXISTENTE', `«${g.nombre}» apunta al ciclo ${g.cicloId}, que no existe`);
+      else {
+        const r = rangoDe(c);
+        if (r && (g.numero < r[0] || g.numero > r[1])) add(inst, 'GRADO FUERA DE SU CICLO', `«${g.nombre}» (n.º ${g.numero}) está en «${c.nombre}» (${r[0]}–${r[1]})`);
+      }
+      if (g.numero > 11) add(inst, 'GRADO > 11', `«${g.nombre}» (n.º ${g.numero}): los grupos solo aceptan grados de 0 a 11`);
+    });
+
+    const numerosGrado = new Set(gs.map((g) => Number(g.numero)));
+    grps.forEach((g) => {
+      if (!numerosGrado.has(Number(g.grado))) add(inst, 'GRUPO SIN GRADO', `El grupo «${g.nombre}» usa el grado n.º ${g.grado} y no existe un Grado con ese número`);
+    });
+
+    const vistas = {};
+    ms.forEach((m) => {
+      const g = m.gradoId ? gradosPorId[String(m.gradoId)] : null;
+      const grp = gruposPorId[String(m.grupoId)];
+      if (!m.gradoId) add(inst, 'MATRÍCULA SIN GRADO', `Matrícula ${m._id} no tiene gradoId`);
+      else if (!g) add(inst, 'MATRÍCULA CON GRADO INEXISTENTE', `Matrícula ${m._id} apunta al grado ${m.gradoId}, que no existe`);
+      if (g && grp && Number(g.numero) !== Number(grp.grado)) add(inst, 'MATRÍCULA INCONSISTENTE', `Matrícula ${m._id}: grado «${g.nombre}» (${g.numero}) pero el grupo «${grp.nombre}» es de grado ${grp.grado}`);
+      if (grp && String(grp.anioAcademicoId) !== String(m.anioAcademicoId)) add(inst, 'MATRÍCULA CON GRUPO DE OTRO AÑO', `Matrícula ${m._id}: el grupo «${grp.nombre}» es de otro año escolar`);
+      if (m.estado !== 'cancelada') {
+        const k = `${m.estudianteId}|${m.anioAcademicoId}`;
+        (vistas[k] = vistas[k] || []).push(m);
+      }
+    });
+    Object.values(vistas).filter((l) => l.length > 1).forEach((l) => add(inst, 'MATRÍCULAS ACTIVAS DUPLICADAS', `Estudiante ${l[0].estudianteId} tiene ${l.length} matrículas no canceladas en el mismo año`));
+  });
+  return hallazgos;
+}
+
+async function main() {
+  if (!process.env.MONGODB_URI) { console.error('Falta MONGODB_URI en el archivo .env'); process.exit(1); }
+  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 });
+  const Ciclo = require('../src/models/Ciclo'), Grado = require('../src/models/Grado'), Grupo = require('../src/models/Grupo'), Matricula = require('../src/models/Matricula');
+  const [ciclos, grados, grupos, matriculas] = await Promise.all([
+    Ciclo.find().lean(), Grado.find().lean(), Grupo.find().lean(), Matricula.find().lean()
+  ]);
+  console.log(`Revisados: ${ciclos.length} ciclos, ${grados.length} grados, ${grupos.length} grupos, ${matriculas.length} matrículas\n`);
+  const h = analizar({ ciclos, grados, grupos, matriculas });
+  if (!h.length) console.log('✔ No se encontró ningún problema.');
+  const graves = h.filter((x) => !x.tipo.startsWith('INFO'));
+  h.forEach((x) => console.log(`[${x.tipo}] (institución ${x.inst}) ${x.texto}`));
+  console.log(`\nResumen: ${graves.length} problema(s) y ${h.length - graves.length} aviso(s) informativo(s). Esta auditoría no modificó ningún dato.`);
+  await mongoose.disconnect();
+}
+
+if (require.main === module) main().catch((e) => { console.error('Error:', e.message); process.exit(1); });
+module.exports = { analizar };
