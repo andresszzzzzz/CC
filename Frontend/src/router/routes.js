@@ -14,7 +14,8 @@ import AsistenciaAcudiente from '../views/acudiente/AsistenciaView.vue'
 import HorarioAcudiente from '../views/acudiente/HorarioView.vue'
 import ObservadorAcudiente from '../views/acudiente/ObservadorView.vue'
 import ComunicadosAcudiente from '../views/acudiente/ComunicadosView.vue'
-
+import RecuperarPassword from '@/views/RecuperarPassword.vue'
+import RestablecerPassword from '@/views/RestablecerPassword.vue'
 // Importación de vistas de la carpeta 'estudiante'
 import InicioEstudiante from '../views/estudiante/InicioView.vue'
 import CalificacionesEstudiante from '../views/estudiante/CalificacionesView.vue'
@@ -91,6 +92,18 @@ const routes = [
     name: 'login',
     component: LoginView,
     meta: { publica: true }
+  },
+  {
+    path: '/recuperar-password',
+    name: 'recuperar-password',
+    component: () => import('../views/RecuperarPassword.vue'),
+    meta: { publica: true, abiertaConSesion: true }
+  },
+  {
+    path: '/restablecer-password',
+    name: 'restablecer-password',
+    component: () => import('../views/RestablecerPassword.vue'),
+    meta: { publica: true, abiertaConSesion: true }
   },
 
   // --- Rutas de Acudiente ---
@@ -371,6 +384,7 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (to.meta.publica) {
+    if (to.meta.abiertaConSesion) return true
     if (!auth.estaAutenticado) return true
     const inicio = inicioPorRol[auth.rol]
     if (!inicio) {
