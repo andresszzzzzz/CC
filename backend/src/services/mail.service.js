@@ -11,7 +11,6 @@ const obtenerTransporter = () => {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: puerto,
-    // true solo para el puerto 465; en 587 se negocia STARTTLS automáticamente
     secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : puerto === 465,
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
@@ -23,8 +22,6 @@ const obtenerTransporter = () => {
 const escaparHtml = (texto = '') =>
   String(texto).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Envía un correo. Si no hay SMTP configurado (típico en desarrollo) NO falla:
-// muestra el contenido en consola para poder probar el flujo.
 const enviarCorreo = async ({ to, subject, text, html }) => {
   if (!smtpConfigurado()) {
     console.warn(`[MAIL] SMTP no configurado: no se envió el correo a ${to}.`);
