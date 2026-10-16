@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -128,7 +128,34 @@ const rolTexto = computed(() => {
   return 'Acudiente'
 })
 
+// --- Menú desplegable del usuario (arriba a la derecha) ---
+const menuUsuarioAbierto = ref(false)
+const perfilRef = ref(null)
+
+const toggleMenuUsuario = () => {
+  menuUsuarioAbierto.value = !menuUsuarioAbierto.value
+}
+
+// Cierra el menú al hacer clic fuera de él o al presionar Escape
+const onClickFuera = (e) => {
+  if (perfilRef.value && !perfilRef.value.contains(e.target)) {
+    menuUsuarioAbierto.value = false
+  }
+}
+const onTeclaEsc = (e) => {
+  if (e.key === 'Escape') menuUsuarioAbierto.value = false
+}
+onMounted(() => {
+  document.addEventListener('click', onClickFuera)
+  document.addEventListener('keydown', onTeclaEsc)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickFuera)
+  document.removeEventListener('keydown', onTeclaEsc)
+})
+
 const cerrarSesion = () => {
+  menuUsuarioAbierto.value = false
   auth.cerrarSesion()
   router.push('/login')
 }
@@ -169,15 +196,6 @@ const cerrarSesion = () => {
           </div>
         </div>
       </div>
-
-      <div class="sidebar-footer">
-        <button class="logout-btn" @click="cerrarSesion" :title="!isSidebarOpen ? 'Cerrar sesión' : ''">
-          <span class="menu-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span v-if="isSidebarOpen" class="menu-text">Cerrar sesión</span>
-        </button>
-      </div>
     </aside>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -192,16 +210,35 @@ const cerrarSesion = () => {
         </div>
 
         <div class="user-nav-right">
-          <button class="notification-btn">
-            <span class="notif-badge">2</span>
-            🔔
-          </button>
-          <div class="user-profile">
-            <div class="avatar-circle">{{ auth.iniciales || 'EN' }}</div>
-            <div class="user-info">
-              <span class="user-name">{{ auth.nombreCompleto || 'Invitado' }}</span>
-              <span class="user-role">{{ rolTexto }}</span>
-            </div>
+          <div class="user-profile-wrapper" ref="perfilRef">
+            <button
+              type="button"
+              class="user-profile"
+              :class="{ open: menuUsuarioAbierto }"
+              :aria-expanded="menuUsuarioAbierto"
+              aria-haspopup="menu"
+              @click="toggleMenuUsuario"
+            >
+              <div class="avatar-circle">{{ auth.iniciales || 'EN' }}</div>
+              <div class="user-info">
+                <span class="user-name">{{ auth.nombreCompleto || 'Invitado' }}</span>
+                <span class="user-role">{{ rolTexto }}</span>
+              </div>
+              <svg class="user-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+
+            <transition name="dropdown">
+              <div v-if="menuUsuarioAbierto" class="user-dropdown" role="menu">
+                <div class="dropdown-header">
+                  <span class="dropdown-name">{{ auth.nombreCompleto || 'Invitado' }}</span>
+                  <span class="dropdown-role">{{ rolTexto }}</span>
+                </div>
+                <button type="button" class="dropdown-item logout" role="menuitem" @click="cerrarSesion">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            </transition>
           </div>
         </div>
       </header>
@@ -247,6 +284,10 @@ const cerrarSesion = () => {
 
 .sidebar.collapsed { width: 80px; }
 .sidebar-top-content { display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; flex: 1; }
+
+/* Oculta la barra de desplazamiento del menú lateral (el scroll con rueda/touch sigue funcionando) */
+.sidebar-top-content { scrollbar-width: none; -ms-overflow-style: none; }
+.sidebar-top-content::-webkit-scrollbar { display: none; }
 
 .sidebar-brand {
   padding: 20px 16px;
@@ -323,29 +364,6 @@ const cerrarSesion = () => {
 }
 .menu-text { margin-left: 12px; flex: 1; }
 
-.sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
-
-.logout-btn {
-  background: rgba(0, 0, 0, 0.1);
-  border: none;
-  color: #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  cursor: pointer;
-  width: 100%;
-  padding: 12px 0;
-  border-radius: 12px;
-}
-.sidebar:not(.collapsed) .logout-btn {
-  justify-content: flex-start;
-  padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-.logout-btn:hover { background: rgba(239, 68, 68, 0.25); color: #fca5a5; }
-
 .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
 .top-navbar {
@@ -361,38 +379,70 @@ const cerrarSesion = () => {
 .welcome-text h2 { font-size: 19px; color: #0f172a; font-weight: 700; }
 .welcome-text p { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-.user-nav-right { display: flex; align-items: center; gap: 20px; }
+.user-nav-right { display: flex; align-items: center; }
 
-.notification-btn {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 16px;
-  cursor: pointer;
-  position: relative;
-  color: #64748b;
+.user-profile-wrapper { position: relative; }
+
+.user-profile {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  gap: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
 }
-.notification-btn:hover { background: #f1f5f9; color: #1e293b; }
+.user-profile:hover,
+.user-profile.open { background: #f1f5f9; border-color: #e2e8f0; }
 
-.notif-badge {
+.user-chevron { color: #64748b; transition: transform 0.2s; flex-shrink: 0; }
+.user-profile.open .user-chevron { transform: rotate(180deg); }
+
+.user-dropdown {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  background: #ef4444;
-  color: white;
-  font-size: 9px;
-  padding: 2px 6px;
-  border-radius: 50%;
-  font-weight: bold;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  z-index: 20;
 }
+.dropdown-header {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+}
+.dropdown-name { font-size: 13px; font-weight: 700; color: #1e293b; }
+.dropdown-role { font-size: 11px; color: #64748b; margin-top: 2px; }
 
-.user-profile { display: flex; align-items: center; gap: 12px; border-left: 1px solid #e2e8f0; padding-left: 20px; }
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #334155;
+  transition: background 0.15s, color 0.15s;
+}
+.dropdown-item.logout { color: #dc2626; }
+.dropdown-item.logout:hover { background: #fef2f2; color: #b91c1c; }
+
+.dropdown-enter-active, .dropdown-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-6px); }
+
 .avatar-circle {
   width: 40px; height: 40px;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
