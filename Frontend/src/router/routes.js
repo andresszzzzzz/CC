@@ -1,3 +1,5 @@
+
+
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { MENU_SECRETARIA } from '@/config/menuSecretaria'
@@ -71,6 +73,7 @@ const vistasSecretaria = {
   'conceptos-contables': () => import('../views/secretaria/ConceptosContables.vue'),
   bitacora: () => import('../views/secretaria/Bitacora.vue')
 }
+
 const rutasSecretaria = Object.entries(vistasSecretaria).map(([ruta, component]) => ({
   path: `/secretaria/${ruta}`,
   name: `secretaria-${ruta}`,
@@ -129,6 +132,13 @@ const routes = [
   },
 
   // --- Rutas de Estudiante ---
+  {
+    path: '/perfil',
+    name: 'perfil',
+    component: () => import('../views/PerfilView.vue'),
+    meta: { rol: ['estudiante', 'acudiente', 'rector', 'admin', 'secretaria'] }
+  },
+
   {
     path: '/estudiante/inicio',
     name: 'estudiante-inicio',

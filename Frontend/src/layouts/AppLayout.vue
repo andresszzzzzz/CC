@@ -154,6 +154,11 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onTeclaEsc)
 })
 
+const irAPerfil = () => {
+  menuUsuarioAbierto.value = false
+  router.push('/perfil')
+}
+
 const cerrarSesion = () => {
   menuUsuarioAbierto.value = false
   auth.cerrarSesion()
@@ -233,6 +238,10 @@ const cerrarSesion = () => {
                   <span class="dropdown-name">{{ auth.nombreCompleto || 'Invitado' }}</span>
                   <span class="dropdown-role">{{ rolTexto }}</span>
                 </div>
+                <button type="button" class="dropdown-item" role="menuitem" @click="irAPerfil">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span>Mi perfil</span>
+                </button>
                 <button type="button" class="dropdown-item logout" role="menuitem" @click="cerrarSesion">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   <span>Cerrar sesión</span>
@@ -437,6 +446,7 @@ const cerrarSesion = () => {
   color: #334155;
   transition: background 0.15s, color 0.15s;
 }
+.dropdown-item:hover { background: #f1f5f9; color: #0f172a; }
 .dropdown-item.logout { color: #dc2626; }
 .dropdown-item.logout:hover { background: #fef2f2; color: #b91c1c; }
 
