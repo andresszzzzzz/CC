@@ -1,4 +1,5 @@
 Credenciales: 
 silvial=654321=Profesor
 JAOC=2007JAOC=Estudiante
-admin.nucleo=CambiaEstaClave123=Administrador
+admin.nucleo=CambiaEstaClave123=Administrador 
+alejandrogay=654321=coordinador 
