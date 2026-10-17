@@ -158,7 +158,7 @@ const emitirEnlaceRecuperacion = async (usuario) => {
   const r = await enviarRecuperacionPassword({ usuario, enlace, minutos: MINUTOS_TOKEN });
   console.log('[RECUPERAR-PASSWORD] ' + (r && r.enviado
     ? 'correo enviado a ' + enmascararEmail(usuario.email)
-    : 'NO enviado: SMTP no configurado (falta SMTP_HOST en Render)'));
+    : 'NO enviado: correo no configurado (falta BREVO_API_KEY en Render)'));
   return true;
 };
 
