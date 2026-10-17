@@ -126,6 +126,15 @@ const usuarioSchema = new mongoose.Schema({
     },
     ultimoLogin: {
       type: Date
+    },
+    // Recuperación de contraseña: se guarda solo el HASH del token (el token real va en el correo).
+    resetTokenHash: {
+      type: String,
+      select: false
+    },
+    resetTokenExpira: {
+      type: Date,
+      select: false
     }
   },
   estado: {

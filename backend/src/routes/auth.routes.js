@@ -6,11 +6,14 @@ const auth = require('../controllers/auth.controller');
 // Públicas (el límite de intentos de /login está en server.js)
 router.post('/login', auth.login);
 router.post('/recuperar-password', auth.recuperarPassword);
+router.post('/restablecer-password', auth.restablecerPassword);
 
 // Requieren sesión
 router.post('/logout', verificarToken, auth.logout);
 router.get('/me', verificarToken, auth.me);
+router.put('/me', verificarToken, auth.actualizarPerfil);
 router.get('/cronograma', verificarToken, auth.cronograma);
 router.post('/cambiar-password', verificarToken, auth.cambiarPassword);
+router.post('/solicitar-restablecimiento', verificarToken, auth.solicitarRestablecimiento);
 
 module.exports = router;

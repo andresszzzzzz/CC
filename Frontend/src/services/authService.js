@@ -16,6 +16,10 @@ export default {
     return api.get('/auth/me')
   },
 
+  actualizarPerfil(payload) {
+    return api.put('/auth/me', payload)
+  },
+
   cambiarPassword(payload) {
     return api.post('/auth/cambiar-password', payload)
   }

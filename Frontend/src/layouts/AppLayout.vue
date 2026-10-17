@@ -13,6 +13,24 @@ const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
+// Menú lateral para Dirección de Núcleo
+const menuNucleo = [
+  {
+    titulo: 'Principal',
+    items: [
+      { label: 'Inicio', icon: 'home', to: '/nucleo' },
+      { label: 'Instituciones', icon: 'building', to: '/nucleo/instituciones' }
+    ]
+  },
+  {
+    titulo: 'Gestión',
+    items: [
+      { label: 'Solicitudes', icon: 'inbox', to: '/nucleo/solicitudes' },
+      { label: 'Reportes', icon: 'bar-chart-2', to: '/nucleo/reportes' }
+    ]
+  }
+]
+
 // Menú lateral por rol. Editar aquí agrega o quita opciones del sidebar.
 const menuAcudiente = [
   {
@@ -112,15 +130,15 @@ const menuSecretaria = [
 ]
 
 const menu = computed(() => {
+  if (auth.rol === 'dirNucleo' || auth.rol === 'nucleo') return menuNucleo
   if (auth.rol === 'estudiante') return menuEstudiante
-  // El admin de un colegio tiene, en el backend, permisos prácticamente
-  // iguales a los de rector (mismo grupo "GESTION"), así que reutiliza
-  // el mismo portal en vez de duplicar vistas.
   if (auth.rol === 'rector' || auth.rol === 'admin') return menuRector
   if (auth.rol === 'secretaria') return menuSecretaria
   return menuAcudiente
 })
+
 const rolTexto = computed(() => {
+  if (auth.rol === 'dirNucleo' || auth.rol === 'nucleo') return 'Director de Núcleo'
   if (auth.rol === 'estudiante') return 'Estudiante'
   if (auth.rol === 'rector') return 'Rector'
   if (auth.rol === 'admin') return 'Administrador'
@@ -145,7 +163,7 @@ const cerrarSesion = () => {
           </div>
           <div v-if="isSidebarOpen" class="brand-text-container">
             <h1>EasyNotes</h1>
-            <p>{{ auth.colegio }}</p>
+            <p>{{ auth.colegio || 'Dirección de Núcleo' }}</p>
           </div>
         </div>
 
@@ -192,14 +210,10 @@ const cerrarSesion = () => {
         </div>
 
         <div class="user-nav-right">
-          <button class="notification-btn">
-            <span class="notif-badge">2</span>
-            🔔
-          </button>
           <div class="user-profile">
-            <div class="avatar-circle">{{ auth.iniciales || 'EN' }}</div>
+            <div class="avatar-circle">{{ auth.iniciales || 'DN' }}</div>
             <div class="user-info">
-              <span class="user-name">{{ auth.nombreCompleto || 'Invitado' }}</span>
+              <span class="user-name">{{ auth.nombreCompleto || 'Director' }}</span>
               <span class="user-role">{{ rolTexto }}</span>
             </div>
           </div>
@@ -207,7 +221,7 @@ const cerrarSesion = () => {
       </header>
 
       <main class="dashboard-content">
-        <!-- AQUÍ SE RENDERIZA EL CONTENIDO DE CADA VISTA -->
+        <!-- AQUÍ SE RENDERIZA EL CONTENIDO DE CADA VISTA (InicioNucleoView, etc.) -->
         <slot></slot>
       </main>
     </div>
@@ -362,35 +376,6 @@ const cerrarSesion = () => {
 .welcome-text p { font-size: 12px; color: #64748b; margin-top: 2px; }
 
 .user-nav-right { display: flex; align-items: center; gap: 20px; }
-
-.notification-btn {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 16px;
-  cursor: pointer;
-  position: relative;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-.notification-btn:hover { background: #f1f5f9; color: #1e293b; }
-
-.notif-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: #ef4444;
-  color: white;
-  font-size: 9px;
-  padding: 2px 6px;
-  border-radius: 50%;
-  font-weight: bold;
-}
 
 .user-profile { display: flex; align-items: center; gap: 12px; border-left: 1px solid #e2e8f0; padding-left: 20px; }
 .avatar-circle {
