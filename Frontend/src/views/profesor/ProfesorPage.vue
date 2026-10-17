@@ -1360,6 +1360,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 import {
   House,
@@ -1379,6 +1380,7 @@ import {
 } from "@lucide/vue";
 
 const router = useRouter();
+const auth = useAuthStore();
 
 /* =========================================================
    NAVEGACIÓN
@@ -2846,15 +2848,9 @@ cargarHorarios();
 ========================================================= */
 
 const cerrarSesion = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem(
-    "usuario"
-  );
-  localStorage.removeItem(
-    "tipoPerfil"
-  );
-
-  router.push("/");
+  auth.cerrarSesion();
+  localStorage.removeItem("tipoPerfil");
+  router.replace("/login");
 };
 </script>
 
