@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthLayout from '@/components/AuthLayout.vue'
 import { recuperacion } from '@/services/recuperacion'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -51,11 +52,11 @@ const guardar = async () => {
       <form class="login-form" @submit.prevent="guardar">
         <label class="field">
           <span>Nueva contraseña</span>
-          <input v-model="password" type="password" placeholder="••••••••" minlength="6" required autocomplete="new-password" />
+          <PasswordInput v-model="password" minlength="6" autocomplete="new-password" />
         </label>
         <label class="field">
           <span>Confirmar contraseña</span>
-          <input v-model="confirmacion" type="password" placeholder="••••••••" minlength="6" required autocomplete="new-password" />
+          <PasswordInput v-model="confirmacion" minlength="6" autocomplete="new-password" />
         </label>
         <p v-if="noCoinciden" class="login-error">Las contraseñas no coinciden.</p>
         <p v-if="error" class="login-error">

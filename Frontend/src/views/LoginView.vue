@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { inicioPorRol } from '@/router/routes'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -69,7 +70,7 @@ const enviar = async () => {
 
           <label class="field">
             <span>Contraseña</span>
-            <input v-model="password" type="password" placeholder="••••••••" required />
+            <PasswordInput v-model="password" autocomplete="current-password" />
           </label>
 
           <p v-if="error" class="login-error">{{ error }}</p>
