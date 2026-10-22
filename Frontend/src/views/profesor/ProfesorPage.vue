@@ -3199,7 +3199,7 @@ const cerrarSesion = () => {
 .topbar h1 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 25px;
   font-weight: 800;
@@ -3223,7 +3223,7 @@ const cerrarSesion = () => {
   border-radius: 50%;
 
   background: #dbe6ff;
-  color: #173f9f;
+  color: #1d4ed8;
 
   font-size: 13px;
   font-weight: 800;
@@ -3232,7 +3232,7 @@ const cerrarSesion = () => {
 .profile-info strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
 }
@@ -3266,7 +3266,7 @@ const cerrarSesion = () => {
 .section-title h2 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 22px;
 }
@@ -3297,7 +3297,7 @@ const cerrarSesion = () => {
   background:
     linear-gradient(
       135deg,
-      #173f9f,
+      #1d4ed8,
       #3861d0
     );
 
@@ -3412,7 +3412,7 @@ const cerrarSesion = () => {
 
   margin-top: 3px;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 25px;
 }
@@ -3464,7 +3464,7 @@ const cerrarSesion = () => {
 .panel-header h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3524,7 +3524,7 @@ const cerrarSesion = () => {
 .empty-state h4 {
   margin: 0;
 
-  color: #374151;
+  color: #1d4ed8;
 
   font-size: 14px;
 }
@@ -3723,7 +3723,7 @@ const cerrarSesion = () => {
 }
 
 .profile-data strong {
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
 }
@@ -3767,7 +3767,7 @@ const cerrarSesion = () => {
   border-radius: 9px;
 
   background: #e5edff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .activity-content {
@@ -3777,7 +3777,7 @@ const cerrarSesion = () => {
 .activity-content h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3895,7 +3895,7 @@ const cerrarSesion = () => {
 .communication-title h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3916,7 +3916,7 @@ const cerrarSesion = () => {
   border-radius: 5px;
 
   background: #eef2ff;
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 9px;
   font-weight: 700;
@@ -3974,7 +3974,7 @@ const cerrarSesion = () => {
 .recent-item strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 12px;
 }
@@ -4046,7 +4046,7 @@ const cerrarSesion = () => {
 .modal-header h2 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 19px;
 }
@@ -4068,7 +4068,7 @@ const cerrarSesion = () => {
 
   background: #f3f4f6;
 
-  color: #374151;
+  color: #1d4ed8;
 
   font-size: 23px;
 
@@ -4208,7 +4208,7 @@ const cerrarSesion = () => {
 .notification-content strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
   font-weight: 800;
@@ -4255,7 +4255,7 @@ const cerrarSesion = () => {
 .notification-close:hover {
   background: #f3f4f6;
 
-  color: #374151;
+  color: #1d4ed8;
 }
 
 .notificacion-enter-active,
@@ -4409,7 +4409,7 @@ const cerrarSesion = () => {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  color: #374151;
+  color: #1d4ed8;
   font-size: 12px;
 }
 
@@ -4437,14 +4437,14 @@ const cerrarSesion = () => {
   border: 1px solid #d1d5db;
   border-radius: 7px;
   background: white;
-  color: #111827;
+  color: #1d4ed8;
   font-family: inherit;
   font-size: 12px;
 }
 
 .table-input:focus {
   outline: none;
-  border-color: #3861d0;
+  border-color: #1d4ed8;
 }
 
 .inline-form-panel {

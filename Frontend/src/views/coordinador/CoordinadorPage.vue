@@ -4964,7 +4964,7 @@ body.portal-coordinador {
   display: flex;
   overflow: hidden;
   background: #f5f7fb;
-  color: #172033;
+  color: #1d4ed8;
 }
 
 /* =========================================================
@@ -4975,7 +4975,7 @@ body.portal-coordinador {
   width: 270px;
   height: 100vh;
   flex-shrink: 0;
-  background: #173f9f;
+  background: #1d4ed8;
   color: white;
   display: flex;
   flex-direction: column;
@@ -5007,7 +5007,7 @@ body.portal-coordinador {
   height: 40px;
   border-radius: 11px;
   background: white;
-  color: #173f9f;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5082,7 +5082,7 @@ body.portal-coordinador {
 
 .menu-item.active {
   background: white;
-  color: #173f9f;
+  color: #1d4ed8;
   font-weight: 700;
 }
 
@@ -5133,7 +5133,7 @@ body.portal-coordinador {
   height: 40px;
   border: none;
   background: #f4f6fa;
-  color: #26324a;
+  color: #1d4ed8;
   border-radius: 9px;
   display: flex;
   align-items: center;
@@ -5154,7 +5154,7 @@ body.portal-coordinador {
 }
 
 .breadcrumb strong {
-  color: #1c2538;
+  color: #1d4ed8;
 }
 
 .topbar-actions {
@@ -5176,7 +5176,7 @@ body.portal-coordinador {
   height: 38px;
   border-radius: 50%;
   background: #e6edff;
-  color: #315bc4;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5227,7 +5227,7 @@ body.portal-coordinador {
 
 .eyebrow {
   display: block;
-  color: #3861d0;
+  color: #1d4ed8;
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 6px;
@@ -5236,7 +5236,7 @@ body.portal-coordinador {
 .page-heading h1 {
   margin: 0;
   font-size: 28px;
-  color: #141d2f;
+  color: #1d4ed8;
 }
 
 .page-heading p {
@@ -5254,7 +5254,7 @@ body.portal-coordinador {
   padding: 0 16px;
   border: none;
   border-radius: 9px;
-  background: #3861d0;
+  background: #1d4ed8;
   color: white;
   display: flex;
   align-items: center;
@@ -5266,7 +5266,7 @@ body.portal-coordinador {
 }
 
 .primary-button:hover {
-  background: #2f55bd;
+  background: #1d4ed8;
   transform: translateY(-1px);
 }
 
@@ -5282,7 +5282,7 @@ body.portal-coordinador {
   border: none;
   border-radius: 8px;
   background: #eaf0ff;
-  color: #315bc4;
+  color: #1d4ed8;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -5320,7 +5320,7 @@ body.portal-coordinador {
   height: 60px;
   border-radius: 14px;
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5368,7 +5368,7 @@ body.portal-coordinador {
 .dashboard-card strong,
 .stat-card strong {
   font-size: 22px;
-  color: #1a2437;
+  color: #1d4ed8;
 }
 
 .dashboard-card-icon,
@@ -5384,7 +5384,7 @@ body.portal-coordinador {
 
 .blue {
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .green {
@@ -5440,7 +5440,7 @@ body.portal-coordinador {
   border: 1px solid #dfe4ed;
   border-radius: 8px;
   background: white;
-  color: #202a3c;
+  color: #1d4ed8;
   outline: none;
   font-size: 13px;
 }
@@ -5451,7 +5451,7 @@ body.portal-coordinador {
 
 .filter-group select:focus,
 .search-box:focus-within {
-  border-color: #3861d0;
+  border-color: #1d4ed8;
 }
 
 .search-box {
@@ -5519,7 +5519,7 @@ body.portal-coordinador {
   width: 30px;
   height: 30px;
   border: 3px solid #e1e6ef;
-  border-top-color: #3861d0;
+  border-top-color: #1d4ed8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -5539,7 +5539,7 @@ body.portal-coordinador {
 ========================================================= */
 
 .selected-group-card {
-  background: #3861d0;
+  background: #1d4ed8;
   color: white;
   border-radius: 13px;
   padding: 19px 22px;
@@ -5722,7 +5722,7 @@ tbody tr:hover {
 
 .empty-state h3 {
   margin: 14px 0 5px;
-  color: #394459;
+  color: #1d4ed8;
   font-size: 16px;
 }
 
@@ -5774,14 +5774,14 @@ tbody tr:hover {
   border-radius: 10px;
   padding: 0 12px;
   background: #fff;
-  color: #26344a;
+  color: #1d4ed8;
   outline: none;
   font-size: 13px;
 }
 
 .filtro-estadistica select:focus {
-  border-color: #3861d0;
-  box-shadow: 0 0 0 3px rgba(56, 97, 208, 0.08);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
 }
 
 .estadisticas-resumen {
@@ -5815,7 +5815,7 @@ tbody tr:hover {
 
 .estadistica-card strong {
   display: block;
-  color: #18263b;
+  color: #1d4ed8;
   font-size: 22px;
   line-height: 1.1;
 }
@@ -6175,7 +6175,7 @@ tbody tr:hover {
   height: 75px;
   border-radius: 18px;
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6224,7 +6224,7 @@ tbody tr:hover {
   width: 42px;
   border: 1px solid #dfe4ed;
   background: white;
-  color: #3861d0;
+  color: #1d4ed8;
   border-radius: 9px;
   display: flex;
   align-items: center;
@@ -6314,7 +6314,7 @@ tbody tr:hover {
 
 .observador-student-item.active {
   background: #eef3ff;
-  box-shadow: inset 3px 0 0 #3861d0;
+  box-shadow: inset 3px 0 0 #1d4ed8;
 }
 
 .observador-student-item .student-avatar {
@@ -6328,7 +6328,7 @@ tbody tr:hover {
 
 .observador-student-info strong {
   display: block;
-  color: #253047;
+  color: #1d4ed8;
   font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
@@ -6348,7 +6348,7 @@ tbody tr:hover {
 }
 
 .observador-student-item.active .observador-student-arrow {
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 /* Detalle */
@@ -6379,7 +6379,7 @@ tbody tr:hover {
   height: 56px;
   border-radius: 15px;
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6440,7 +6440,7 @@ tbody tr:hover {
 
 .observador-summary-icon.blue {
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .observador-summary-icon.orange {
@@ -6541,7 +6541,7 @@ tbody tr:hover {
 
 .observacion-tag.tipo {
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .observacion-tag.positiva {
@@ -6561,7 +6561,7 @@ tbody tr:hover {
 
 .observacion-tag.baja {
   background: #eef7ff;
-  color: #3976a9;
+  color: #1d4ed8;
 }
 
 .observacion-tag.media {
@@ -6598,7 +6598,7 @@ tbody tr:hover {
 
 .observacion-status.seguimiento {
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .observacion-status.cerrado {
@@ -6693,7 +6693,7 @@ tbody tr:hover {
 
 .observacion-action:hover {
   background: #f1f4fa;
-  color: #3861d0;
+  color: #1d4ed8;
   border-color: #cfd8ec;
 }
 
@@ -6849,7 +6849,7 @@ tbody tr:hover {
   height: 40px;
   border-radius: 10px;
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6942,8 +6942,8 @@ tbody tr:hover {
 .observador-form-group select:focus,
 .observador-form-group input:focus,
 .observador-form-group textarea:focus {
-  border-color: #3861d0;
-  box-shadow: 0 0 0 3px rgba(56, 97, 208, 0.08);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
 }
 
 .observador-form-hint {
@@ -6991,7 +6991,7 @@ tbody tr:hover {
   padding: 0 17px;
   border: none;
   border-radius: 9px;
-  background: #3861d0;
+  background: #1d4ed8;
   color: white;
   font-size: 12px;
   font-weight: 700;
@@ -7002,7 +7002,7 @@ tbody tr:hover {
 }
 
 .observador-save-button:hover {
-  background: #2f55bd;
+  background: #1d4ed8;
 }
 
 .observador-save-button:disabled {
@@ -7226,7 +7226,7 @@ tbody tr:hover {
   border-radius: 9px;
 
   background: #fff;
-  color: #202a3c;
+  color: #1d4ed8;
 
   font-family: inherit;
   font-size: 13px;
@@ -7241,8 +7241,8 @@ tbody tr:hover {
 }
 
 .filtro-observador select:focus {
-  border-color: #3861d0;
-  box-shadow: 0 0 0 3px rgba(56, 97, 208, 0.08);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
 }
 
 .input-icon-wrapper {
@@ -7299,7 +7299,7 @@ tbody tr:hover {
   border-radius: 9px;
 
   background: white;
-  color: #3861d0;
+  color: #1d4ed8;
 
   display: inline-flex;
   align-items: center;
@@ -7432,7 +7432,7 @@ tbody tr:hover {
   border-radius: 9px;
 
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 12px;
   font-weight: 800;
@@ -7456,7 +7456,7 @@ tbody tr:hover {
 }
 
 .loading-spin {
-  color: #3861d0;
+  color: #1d4ed8;
   animation: spin 0.8s linear infinite;
 }
 
@@ -7553,7 +7553,7 @@ tbody tr:hover {
 .estudiante-item.active {
   background: #eef3ff;
 
-  box-shadow: inset 3px 0 0 #3861d0;
+  box-shadow: inset 3px 0 0 #1d4ed8;
 }
 
 .estudiante-item > svg {
@@ -7562,7 +7562,7 @@ tbody tr:hover {
 }
 
 .estudiante-item.active > svg {
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 /* Avatar */
@@ -7580,7 +7580,7 @@ tbody tr:hover {
   justify-content: center;
 
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 11px;
   font-weight: 800;
@@ -7596,7 +7596,7 @@ tbody tr:hover {
 .estudiante-info strong {
   display: block;
 
-  color: #273146;
+  color: #1d4ed8;
   font-size: 12px;
   font-weight: 800;
 
@@ -7648,7 +7648,7 @@ tbody tr:hover {
     #dce7ff
   );
 
-  color: #315bc4;
+  color: #1d4ed8;
 
   font-size: 16px;
   font-weight: 800;
@@ -7666,7 +7666,7 @@ tbody tr:hover {
 .detalle-estudiante-header h2 {
   margin: 0;
 
-  color: #182235;
+  color: #1d4ed8;
   font-size: 19px;
   font-weight: 800;
 }
@@ -7728,7 +7728,7 @@ tbody tr:hover {
   justify-content: center;
 
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .resumen-observador-item:nth-child(2) .resumen-icon {
@@ -7753,7 +7753,7 @@ tbody tr:hover {
 
   margin-top: 2px;
 
-  color: #1d273a;
+  color: #1d4ed8;
   font-size: 19px;
 }
 
@@ -7772,7 +7772,7 @@ tbody tr:hover {
 .historial-header h3 {
   margin: 0;
 
-  color: #253047;
+  color: #1d4ed8;
   font-size: 15px;
 }
 
@@ -7850,7 +7850,7 @@ tbody tr:hover {
   justify-content: center;
 
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 /* Contenido */
@@ -7896,7 +7896,7 @@ tbody tr:hover {
 
 .observacion-tipo {
   background: #e8efff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .observacion-tipo.tipo-disciplinario {
@@ -7930,7 +7930,7 @@ tbody tr:hover {
 
 .observacion-gravedad.gravedad-baja {
   background: #eef7ff;
-  color: #3976a9;
+  color: #1d4ed8;
 }
 
 .observacion-gravedad.gravedad-media {
@@ -7939,24 +7939,24 @@ tbody tr:hover {
 }
 
 .observacion-gravedad.gravedad-alta {
-  background: #ffe5e5;
+  background: white;
   color: #c43d3d;
 }
 
 /* Estado */
 
 .observacion-estado.estado-abierto {
-  background: #fff1df;
+  background: white;
   color: #bd7620;
 }
 
 .observacion-estado.estado-seguimiento {
-  background: #e8efff;
-  color: #3861d0;
+  background: white;
+  color: #1d4ed8;
 }
 
 .observacion-estado.estado-cerrado {
-  background: #e5f8ee;
+  background: white;
   color: #208552;
 }
 
@@ -7991,9 +7991,9 @@ tbody tr:hover {
 
   padding: 11px 12px;
 
-  background: #f2f5fa;
+  background: white;
 
-  border-left: 3px solid #3861d0;
+  border-left: 3px solid #1d4ed8;
   border-radius: 0 8px 8px 0;
 
   color: #657084;
@@ -8021,7 +8021,7 @@ tbody tr:hover {
   justify-content: space-between;
   gap: 10px;
 
-  border-top: 1px solid #e9edf3;
+  border-top: 1px solid white;
 }
 
 .observacion-footer > span {
@@ -8043,7 +8043,7 @@ tbody tr:hover {
   width: 30px;
   height: 30px;
 
-  border: 1px solid #dfe4ed;
+  border: 1px solid white;
 
   background: white;
   color: #69758a;
@@ -8052,13 +8052,13 @@ tbody tr:hover {
 }
 
 .observacion-acciones .icon-button:hover {
-  background: #eef3ff;
+  background: white;
   border-color: #cbd7f1;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .observacion-acciones .icon-button.danger:hover {
-  background: #fff0f0;
+  background: white;
   border-color: #ffd2d2;
   color: #c43d3d;
 }
@@ -8072,9 +8072,9 @@ tbody tr:hover {
 
   padding: 13px 14px;
 
-  background: #f7f9fc;
+  background: white;
 
-  border: 1px solid #e5e9f0;
+  border: 1px solid white;
   border-radius: 10px;
 }
 
@@ -8090,13 +8090,13 @@ tbody tr:hover {
 }
 
 .seguimiento-titulo svg {
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .seguimiento-item {
   padding: 8px 0 8px 14px;
 
-  border-left: 2px solid #d8e2f7;
+  border-left: 2px solid white;
 }
 
 .seguimiento-item + .seguimiento-item {
@@ -8164,7 +8164,7 @@ tbody tr:hover {
 
   .resumen-observador-item {
     border-right: none;
-    border-bottom: 1px solid #edf0f5;
+    border-bottom: 1px solid white;
   }
 
   .resumen-observador-item:last-child {
@@ -8314,9 +8314,9 @@ tbody tr:hover {
 
   margin-bottom: 20px;
 
-  background: #ffffff;
+  background: white;
 
-  border: 1px solid #e5e9f1;
+  border: 1px solid white;
   border-radius: 14px;
 
   box-shadow: 0 2px 8px rgba(27, 43, 72, 0.03);
@@ -8346,11 +8346,11 @@ tbody tr:hover {
 
   padding: 0 12px;
 
-  border: 1px solid #dce2eb;
+  border: 1px solid white;
   border-radius: 9px;
 
-  background: #ffffff;
-  color: #273146;
+  background: white;
+  color: #1d4ed8;
 
   font-family: inherit;
   font-size: 13px;
@@ -8361,8 +8361,8 @@ tbody tr:hover {
 }
 
 .filtro-observador select:focus {
-  border-color: #3861d0;
-  box-shadow: 0 0 0 3px rgba(56, 97, 208, 0.08);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 200, 0.08);
 }
 
 .filtro-busqueda {
@@ -8382,10 +8382,10 @@ tbody tr:hover {
 
   padding: 0 12px;
 
-  border: 1px solid #dce2eb;
+  border: 1px solid white;
   border-radius: 9px;
 
-  background: #ffffff;
+  background: white;
 
   color: #98a2b3;
 
@@ -8393,8 +8393,8 @@ tbody tr:hover {
 }
 
 .input-icon-wrapper:focus-within {
-  border-color: #3861d0;
-  box-shadow: 0 0 0 3px rgba(56, 97, 208, 0.08);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 200, 0.08);
 }
 
 .input-icon-wrapper input {
@@ -8410,7 +8410,7 @@ tbody tr:hover {
 
   background: transparent;
 
-  color: #263148;
+  color: #1d4ed8;
 
   font-family: inherit;
   font-size: 13px;
@@ -8425,11 +8425,11 @@ tbody tr:hover {
 
   padding: 0 17px;
 
-  border: 1px solid #dce3ef;
+  border: 1px solid white;
   border-radius: 9px;
 
-  background: #ffffff;
-  color: #3861d0;
+  background: white;
+  color: #1d4ed8;
 
   display: inline-flex;
   align-items: center;
@@ -8449,8 +8449,8 @@ tbody tr:hover {
 }
 
 .secondary-button:hover {
-  background: #f2f5ff;
-  border-color: #c9d5f0;
+  background: white;
+  border-color: white;
 }
 
 /* =========================================================
@@ -8476,8 +8476,8 @@ tbody tr:hover {
 }
 
 .observador-alert-error {
-  background: #fff1f1;
-  border: 1px solid #ffd4d4;
+  background: white;
+  border: 1px solid white;
   color: #c33e3e;
 }
 
@@ -8505,9 +8505,9 @@ tbody tr:hover {
   width: 100%;
   box-sizing: border-box;
 
-  background: #ffffff;
+  background: white;
 
-  border: 1px solid #e5e9f1;
+  border: 1px solid white;
 
   border-radius: 14px;
 
@@ -8541,13 +8541,13 @@ tbody tr:hover {
 
   gap: 12px;
 
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid white;
 }
 
 .observador-card-header h2 {
   margin: 0;
 
-  color: #202a3d;
+  color: #1d4ed8;
 
   font-size: 15px;
   font-weight: 800;
@@ -8576,9 +8576,9 @@ tbody tr:hover {
 
   border-radius: 9px;
 
-  background: #e8efff;
+  background: white;
 
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 12px;
   font-weight: 800;
@@ -8601,7 +8601,7 @@ tbody tr:hover {
 }
 
 .estudiantes-lista::-webkit-scrollbar-thumb {
-  background: #d7deea;
+  background: white;
   border-radius: 10px;
 }
 
@@ -8620,13 +8620,13 @@ tbody tr:hover {
   gap: 11px;
 
   border: none !important;
-  border-bottom: 1px solid #edf0f4 !important;
+  border-bottom: 1px solid white !important;
 
   border-radius: 0 !important;
 
-  background: #ffffff !important;
+  background: white !important;
 
-  color: #263148 !important;
+  color: #1d4ed8 !important;
 
   text-align: left;
 
@@ -8636,13 +8636,13 @@ tbody tr:hover {
 }
 
 .estudiante-item:hover {
-  background: #f7f9fd !important;
+  background: white !important;
 }
 
 .estudiante-item.active {
-  background: #eef3ff !important;
+  background: white !important;
 
-  box-shadow: inset 3px 0 0 #3861d0;
+  box-shadow: inset 3px 0 0 #1d4ed8;
 }
 
 .estudiante-item > svg {
@@ -8652,7 +8652,7 @@ tbody tr:hover {
 }
 
 .estudiante-item.active > svg {
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 /* Avatar */
@@ -8669,9 +8669,9 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
 
-  background: #e8efff;
+  background: white;
 
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 11px;
   font-weight: 800;
@@ -8689,7 +8689,7 @@ tbody tr:hover {
 
   overflow: hidden;
 
-  color: #273146;
+  color: #1d4ed8;
 
   font-size: 12px;
   font-weight: 800;
@@ -8724,7 +8724,7 @@ tbody tr:hover {
 
   gap: 14px;
 
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid white;
 }
 
 .detalle-estudiante-avatar {
@@ -8739,9 +8739,9 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
 
-  background: #e8efff;
+  background: white;
 
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 15px;
   font-weight: 800;
@@ -8759,7 +8759,7 @@ tbody tr:hover {
 .detalle-estudiante-header h2 {
   margin: 0;
 
-  color: #182235;
+  color: #1d4ed8;
 
   font-size: 20px;
   font-weight: 800;
@@ -8792,7 +8792,7 @@ tbody tr:hover {
 
   grid-template-columns: repeat(3, 1fr) !important;
 
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid white;
 }
 
 .resumen-observador-item {
@@ -8807,7 +8807,7 @@ tbody tr:hover {
 
   gap: 10px;
 
-  border-right: 1px solid #edf0f4;
+  border-right: 1px solid white;
 }
 
 .resumen-observador-item:last-child {
@@ -8826,18 +8826,18 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
 
-  background: #e8efff;
+  background: white;
 
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .resumen-observador-item:nth-child(2) .resumen-icon {
-  background: #fff1df;
+  background: white;
   color: #c98126;
 }
 
 .resumen-observador-item:nth-child(3) .resumen-icon {
-  background: #e5f8ee;
+  background: white;
   color: #21955c;
 }
 
@@ -8854,7 +8854,7 @@ tbody tr:hover {
 
   margin-top: 3px;
 
-  color: #202a3d;
+  color: #1d4ed8;
 
   font-size: 19px;
 }
@@ -8874,7 +8874,7 @@ tbody tr:hover {
 .historial-header h3 {
   margin: 0;
 
-  color: #253047;
+  color: #1d4ed8;
 
   font-size: 15px;
   font-weight: 800;
@@ -8914,9 +8914,9 @@ tbody tr:hover {
 
   padding: 16px;
 
-  background: #fbfcfe;
+  background: white;
 
-  border: 1px solid #e3e8f0;
+  border: 1px solid white;
 
   border-radius: 12px;
 }
@@ -8931,7 +8931,7 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
 
-  background: #e8efff;
+  background: white;
 
   color: #3861d0;
 }
@@ -8976,52 +8976,52 @@ tbody tr:hover {
 }
 
 .observacion-tipo {
-  background: #e8efff;
+  background: white;
   color: #3861d0;
 }
 
 .observacion-categoria.categoria-positiva {
-  background: #e5f8ee;
+  background: white;
   color: #208552;
 }
 
 .observacion-categoria.categoria-negativa {
-  background: #ffe8e8;
+  background: white;
   color: #cc4141;
 }
 
 .observacion-categoria.categoria-neutra {
-  background: #f0f2f5;
+  background: white;
   color: #737d8f;
 }
 
 .observacion-gravedad.gravedad-baja {
-  background: #eef7ff;
+  background: white;
   color: #3976a9;
 }
 
 .observacion-gravedad.gravedad-media {
-  background: #fff1df;
+  background: white;
   color: #bd7620;
 }
 
 .observacion-gravedad.gravedad-alta {
-  background: #ffe5e5;
+  background: white;
   color: #c43d3d;
 }
 
 .observacion-estado.estado-abierto {
-  background: #fff1df;
+  background: white;
   color: #bd7620;
 }
 
 .observacion-estado.estado-seguimiento {
-  background: #e8efff;
+  background: white;
   color: #3861d0;
 }
 
 .observacion-estado.estado-cerrado {
-  background: #e5f8ee;
+  background: white;
   color: #208552;
 }
 
@@ -9053,7 +9053,7 @@ tbody tr:hover {
 
   padding: 10px 12px;
 
-  background: #f2f5fa;
+  background: white;
 
   border-left: 3px solid #3861d0;
 
