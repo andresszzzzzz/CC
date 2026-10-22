@@ -52,8 +52,8 @@ async function alternarEstado() {
 <template>
   <AppLayout>
     <template #header-title><h2>Ficha del estudiante</h2><p>Estado, foto, acudientes, matrículas e historial académico.</p></template>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <section class="sec-panel">
       <div class="sec-fila">
         <input v-model="q" placeholder="Nombre o documento" style="flex:1;min-width:220px;border:1px solid #cbd5e1;border-radius:10px;padding:9px 12px" @keyup.enter="buscar" />
@@ -82,7 +82,7 @@ async function alternarEstado() {
                 </select>
               </label>
             </div>
-            <div v-if="hayDuplicadas" class="sec-msg sec-msg--err">Este estudiante tiene más de una matrícula activa en {{ anioTexto }}. Revísalo en Matrículas: solo debe haber una.</div>
+            <div v-if="hayDuplicadas" class="alert alert-warning" role="alert"><strong>¡Atención!</strong> Este estudiante tiene más de una matrícula activa en {{ anioTexto }}. Revísalo en Matrículas: solo debe haber una.</div>
             <div v-if="matriculaSel" class="sec-fila">
               <span class="sec-chip">Grado: {{ matriculaSel.gradoNombre || '—' }}</span>
               <span class="sec-chip">Grupo: {{ matriculaSel.grupoNombre || '—' }}</span>

@@ -9,13 +9,12 @@ onMounted(() => cargar('anios'))
 watch(institucionId, () => cargar('anios'))
 
 const columnas = [
-  { key: 'orden', label: 'Orden' }, { key: 'nombre', label: 'Periodo' }, { key: 'fechaInicio', label: 'Inicio' },
+  { key: 'orden', label: 'N.º' }, { key: 'nombre', label: 'Periodo' }, { key: 'fechaInicio', label: 'Inicio' },
   { key: 'fechaFin', label: 'Fin' }, { key: 'porcentaje', label: '% nota final' }, { key: 'usaEnNotaFinal', label: 'Cuenta en nota final' }, { key: 'estado', label: 'Estado' }
 ]
 const campos = computed(() => [
   { key: 'anioAcademicoId', label: 'Año escolar', type: 'select', required: true, opciones: opc('anios', (a) => String(a.anio)) },
   { key: 'nombre', label: 'Nombre del periodo', required: true, placeholder: 'ej. Periodo 1' },
-  { key: 'orden', label: 'Orden', type: 'number', min: 1, required: true },
   { key: 'fechaInicio', label: 'Fecha de inicio', type: 'date', required: true },
   { key: 'fechaFin', label: 'Fecha de finalización', type: 'date', required: true },
   { key: 'usaEnNotaFinal', label: '¿Cuenta para la nota final del año?', type: 'select', opciones: [{ value: 'SI', label: 'Sí' }, { value: 'NO', label: 'No' }] },
@@ -24,7 +23,8 @@ const campos = computed(() => [
 ])
 const antesDeEnviar = (p) => {
   if (p.fechaFin <= p.fechaInicio) throw new Error('La fecha de fin debe ser posterior a la de inicio.')
-  return { estado: 'abierto', usaEnNotaFinal: 'SI', ...p, orden: Number(p.orden) }
+  // El número (orden) lo asigna el sistema automáticamente: ya no se pide en el formulario.
+  return { estado: 'abierto', usaEnNotaFinal: 'SI', ...p }
 }
 </script>
 

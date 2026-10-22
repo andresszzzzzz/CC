@@ -6,6 +6,9 @@ import { firmasApi } from '@/services/secretariaApiExt'
 import { useConfigInstitucional } from '@/composables/useConfigInstitucional'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
 import '@/styles/secretaria-ui.css'
+import { useNotificacionesStore } from '@/stores/notificaciones'
+
+const notif = useNotificacionesStore()
 
 const { institucionId } = useContextoInstitucional()
 const { recargar } = useConfigInstitucional()
@@ -37,7 +40,7 @@ async function guardar(f) {
 }
 async function quitar(f, i) {
   if (!f._id) return firmas.value.splice(i, 1)
-  if (!confirm('¿Eliminar esta firma? Los documentos nuevos dejarán de usarla.')) return
+  if (!(await notif.confirmar('Los documentos nuevos dejarán de usar esta firma.', { titulo: '¿Eliminar esta firma?', textoSi: 'Sí, eliminar' }))) return
   try { await firmasApi.eliminar(f._id); firmas.value.splice(i, 1); await recargar() } catch { error.value = 'No se pudo eliminar.' }
 }
 function alternarDoc(f, d) { const i = f.usarEn.indexOf(d); i >= 0 ? f.usarEn.splice(i, 1) : f.usarEn.push(d) }
@@ -46,8 +49,8 @@ function alternarDoc(f, d) { const i = f.usarEn.indexOf(d); i >= 0 ? f.usarEn.sp
 <template>
   <AppLayout>
     <template #header-title><h2>Firmas institucionales</h2><p>Firma del rector y de otras personas que firman documentos. Se aplican solas en los PDF.</p></template>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <div v-if="cargando" class="sec-vacio">Cargando…</div>
     <template v-else>
       <div v-if="!firmas.length" class="sec-panel sec-vacio">Aún no hay firmas. Empieza agregando la del rector.</div>

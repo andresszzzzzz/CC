@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 
 const props = defineProps({
   abierto: { type: Boolean, default: false },
@@ -26,8 +26,14 @@ function escribir(obj, ruta, valor) {
 }
 
 const form = reactive({})
+const aviso = ref('')
+
+// Editando = el registro ya existe. "requiredAlCrear": obligatorio solo al crear (al editar puede quedar como estaba).
+const editando = computed(() => !!props.valores?._id)
+const esRequerido = (c) => !!c.required || (!!c.requiredAlCrear && !editando.value)
 
 function inicializar() {
+  aviso.value = ''
   Object.keys(form).forEach((k) => delete form[k])
   props.campos.forEach((c) => {
     let v = leer(props.valores, c.key)
@@ -42,7 +48,30 @@ watch(() => props.abierto, (abierto) => { if (abierto) inicializar() }, { immedi
 
 const opcionesDe = (c) => (typeof c.opciones === 'function' ? c.opciones() : c.opciones || [])
 
+const vacio = (v) => v === '' || v === null || v === undefined
+
+// Validación propia (sin los globos del navegador): se avisa con una alerta de Bootstrap.
+function validar() {
+  const faltan = props.campos.filter((c) => esRequerido(c) && vacio(form[c.key])).map((c) => c.label.replace(/\s*\(.*\)\s*$/, ''))
+  if (faltan.length) return `Debes completar los campos obligatorios: ${faltan.join(', ')}.`
+  for (const c of props.campos) {
+    const v = form[c.key]
+    if (vacio(v)) continue
+    if (c.type === 'number') {
+      const n = Number(v)
+      if (Number.isNaN(n)) return `«${c.label}» debe ser un número.`
+      if (c.min !== undefined && n < c.min) return `«${c.label}» no puede ser menor que ${c.min}.`
+      if (c.max !== undefined && n > c.max) return `«${c.label}» no puede ser mayor que ${c.max}.`
+    }
+    if (c.minlength && String(v).length < c.minlength) return `«${c.label}» debe tener al menos ${c.minlength} caracteres.`
+    if (c.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v))) return `Escribe un correo electrónico válido en «${c.label}».`
+  }
+  return ''
+}
+
 function enviar() {
+  aviso.value = validar()
+  if (aviso.value) return
   const salida = {}
   props.campos.forEach((c) => {
     let v = form[c.key]
@@ -62,12 +91,12 @@ function enviar() {
         <button type="button" class="modal-x" @click="$emit('cerrar')">&times;</button>
       </div>
 
-      <form class="modal-form" @submit.prevent="enviar">
+      <form class="modal-form" novalidate @submit.prevent="enviar">
         <label v-for="c in campos" :key="c.key" :class="['campo', { 'campo--ancho': c.type === 'textarea' }]">
-          <span>{{ c.label }}<b v-if="c.required"> *</b></span>
+          <span>{{ c.label }}<b v-if="esRequerido(c)"> *</b></span>
 
-          <select v-if="c.type === 'select'" v-model="form[c.key]" :required="c.required">
-            <option v-if="!c.required || !form[c.key]" value="">Selecciona…</option>
+          <select v-if="c.type === 'select'" v-model="form[c.key]" :required="esRequerido(c)">
+            <option v-if="!esRequerido(c) || !form[c.key]" value="">Selecciona…</option>
             <option v-for="op in opcionesDe(c)" :key="op.value" :value="op.value">{{ op.label }}</option>
           </select>
 
@@ -75,7 +104,7 @@ function enviar() {
             v-else-if="c.type === 'textarea'"
             v-model="form[c.key]"
             rows="4"
-            :required="c.required"
+            :required="esRequerido(c)"
             :placeholder="c.placeholder"
           ></textarea>
 
@@ -83,7 +112,7 @@ function enviar() {
             v-else
             v-model="form[c.key]"
             :type="c.type || 'text'"
-            :required="c.required"
+            :required="esRequerido(c)"
             :placeholder="c.placeholder"
             :min="c.min"
             :max="c.max"
@@ -92,7 +121,12 @@ function enviar() {
           />
         </label>
 
-        <p v-if="error" class="modal-error">{{ error }}</p>
+        <div v-if="aviso" class="alert alert-warning modal-alerta mb-0" role="alert">
+          <strong>¡Atención!</strong> {{ aviso }}
+        </div>
+        <div v-if="error && !aviso" class="alert alert-danger modal-alerta mb-0" role="alert">
+          <strong>¡Error!</strong> {{ error }}
+        </div>
 
         <div class="modal-acciones">
           <button type="button" class="btn-sec" @click="$emit('cerrar')">Cancelar</button>
@@ -122,7 +156,7 @@ function enviar() {
 .campo input, .campo select { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #0f172a; outline: none; }
 .campo input:focus, .campo select:focus { border-color: #2563eb; background: white; }
 
-.modal-error { grid-column: 1 / -1; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 10px; padding: 10px 12px; font-size: 12px; }
+.modal-alerta { grid-column: 1 / -1; font-size: 13px; }
 .modal-acciones { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 4px; }
 .btn-sec { background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-pri { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 10px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }

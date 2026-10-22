@@ -18,8 +18,8 @@ async function alSubir(u) {
 <template>
   <AppLayout>
     <template #header-title><h2>Escudo / Logo</h2><p>Una sola imagen para toda la institución.</p></template>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <section class="sec-panel" style="max-width:520px">
       <ImageUploader v-model="url" tipo="escudo" etiqueta="Escudo institucional" :altura="200" ayuda="PNG con fondo transparente recomendado. Máximo 2 MB." @subido="alSubir" />
     </section>

@@ -63,7 +63,7 @@ watch(institucionId, cargar)
       Tu usuario no tiene una institución asociada todavía.
     </div>
     <div v-else-if="cargando" class="estado-carga">Cargando…</div>
-    <div v-else-if="error" class="estado-error">{{ error }}</div>
+    <div v-else-if="error" class="alert alert-danger" role="alert"><strong>¡Error!</strong> {{ error }}</div>
 
     <template v-else>
       <section class="tarjetas-resumen">

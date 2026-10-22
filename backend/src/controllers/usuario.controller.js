@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario');
 const { enriquecerEstudiantes } = require('./secretaria/enriquecer');
+const { separarAsignacion, prepararAsignacion, aplicarAsignacion, ErrorHttp } = require('./secretaria/asignarGrupo');
 
 // Quien pertenece a un colegio solo puede tocar usuarios de ese mismo colegio.
 const alcance = (req, extra = {}) =>
@@ -85,14 +86,21 @@ const crearUsuario = async (req, res) => {
     // sin importar lo que mande el navegador. Después se inactiva desde la edición.
     datos.estado = 'activo';
 
+    // Grupo y jornada se guardan en la matrícula (no en el usuario): se validan antes de crear al estudiante.
+    const asignacion = separarAsignacion(datos);
+    const institucionId = datos.institucionId || req.usuario?.institucionId;
+    const plan = datos.tipoPerfil === 'estudiante' ? await prepararAsignacion(institucionId, asignacion) : null;
+
     const nuevoUsuario = new Usuario(datos);
     await nuevoUsuario.save();
+    await aplicarAsignacion(plan, nuevoUsuario._id);
 
     const usuarioSinPassword = nuevoUsuario.toObject();
     delete usuarioSinPassword.credenciales;
 
     res.status(201).json(usuarioSinPassword);
   } catch (error) {
+    if (error instanceof ErrorHttp) return res.status(error.status).json({ mensaje: error.mensaje });
     res.status(400).json({ mensaje: 'Error al crear el usuario', error: error.message });
   }
 };
@@ -109,6 +117,15 @@ const actualizarUsuario = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permisos para asignar ese rol' });
     }
 
+    const asignacion = separarAsignacion(datos);
+    const previo = await Usuario.findOne(alcance(req, { _id: req.params.id })).select('institucionId tipoPerfil');
+    if (!previo) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+    const plan = (datos.tipoPerfil || previo.tipoPerfil) === 'estudiante'
+      ? await prepararAsignacion(previo.institucionId, asignacion, previo._id)
+      : null;
+
     const actualizado = await Usuario.findOneAndUpdate(alcance(req, { _id: req.params.id }), datos, {
       new: true,
       runValidators: true
@@ -118,8 +135,11 @@ const actualizarUsuario = async (req, res) => {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
 
+    await aplicarAsignacion(plan, actualizado._id);
+
     res.status(200).json(actualizado);
   } catch (error) {
+    if (error instanceof ErrorHttp) return res.status(error.status).json({ mensaje: error.mensaje });
     res.status(400).json({ mensaje: 'Error al actualizar el usuario', error: error.message });
   }
 };

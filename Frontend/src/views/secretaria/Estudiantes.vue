@@ -6,8 +6,8 @@ import { columnasPersona, camposPersona } from '@/config/camposPersona'
 import { conDesactivacion, conCampoEstado, TEXTOS_DESACTIVAR } from '@/services/secretariaApiExt'
 import { useCatalogos } from '@/composables/useCatalogos'
 
-const { cargar, opc, institucionId, nombrePersona } = useCatalogos()
-const load = () => cargar('grupos', 'jornadas', 'acudientes')
+const { cargar, opc, institucionId, nombrePersona, grupos, jornadas, anios } = useCatalogos()
+const load = () => cargar('grupos', 'jornadas', 'acudientes', 'anios')
 onMounted(load)
 watch(institucionId, load)
 
@@ -17,10 +17,25 @@ const columnas = [
   { key: 'estadoEstudiante', label: 'Situación' }, { key: 'grupoNombre', label: 'Grupo' },
   { key: 'jornadaNombre', label: 'Jornada' }, { key: 'estado', label: 'Acceso' }
 ]
+// Grupos y jornadas vigentes (no se ofrecen los inactivos ni cerrados) con el año escolar al lado
+const anioDe = (g) => g.anioAcademicoId?.anio ?? anios.value.find((a) => a._id === (g.anioAcademicoId?._id ?? g.anioAcademicoId))?.anio
+const opcGrupos = () => grupos.value
+  .filter((g) => !['inactivo', 'cerrado'].includes(g.estado))
+  .map((g) => ({ value: g._id, label: `${g.nombre} — grado ${g.grado}${anioDe(g) ? ` (${anioDe(g)})` : ''}` }))
+const opcJornadas = () => jornadas.value
+  .filter((j) => j.estado !== 'inactivo')
+  .map((j) => ({ value: j._id, label: j.nombre }))
+
+// El grupo y la jornada se guardan en la matrícula del estudiante: sin grupo no hay dónde registrar la jornada.
+const antesDeEnviar = (p, editando) => {
+  if (!editando && p.jornadaId && !p.grupoId) throw new Error('Para registrar la jornada elige también el grupo: así queda matriculado en ese grupo y jornada.')
+  return p
+}
+
 const campos = computed(() => [
   ...conCampoEstado(camposPersona()),
-  { key: 'grupoId', label: 'Grupo / curso (define el grado)', type: 'select', opciones: opc('grupos', (g) => `${g.nombre} — grado ${g.grado}`) },
-  { key: 'jornadaId', label: 'Jornada', type: 'select', opciones: opc('jornadas', 'nombre') },
+  { key: 'grupoId', label: 'Grupo / curso (define el grado)', type: 'select', opciones: opcGrupos },
+  { key: 'jornadaId', label: 'Jornada', type: 'select', opciones: opcJornadas },
   { key: 'acudienteId', label: 'Acudiente principal', type: 'select', opciones: opc('acudientes', nombrePersona) }
 ])
 </script>
@@ -33,6 +48,7 @@ const campos = computed(() => [
     :columnas="columnas"
     :campos="campos"
     :filtros-fijos="{ tipoPerfil: 'estudiante' }"
+    :antes-de-enviar="antesDeEnviar"
     nombre-item="estudiante"
     v-bind="TEXTOS_DESACTIVAR"
   />

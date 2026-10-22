@@ -90,7 +90,7 @@ const aniosApi = {
     if (b.anio !== undefined) a.anio = Number(b.anio);
     if (b.fechaInicio !== undefined) a.fechaInicio = b.fechaInicio || undefined;
     if (b.fechaFin !== undefined) a.fechaFin = b.fechaFin || undefined;
-    if (b.numeroPeriodos !== undefined) {
+    if (b.numeroPeriodos !== undefined && b.numeroPeriodos !== null && b.numeroPeriodos !== '') {
       validarNumeroPeriodos(Number(b.numeroPeriodos));
       a.configuracion.numeroPeriodos = Number(b.numeroPeriodos);
     }
@@ -186,7 +186,13 @@ const periodosApi = {
     if (!anio) throw new ErrorHttp(404, 'El año escolar no existe en tu institución.');
     validarFechas(b.fechaInicio, b.fechaFin);
     const d = datosPeriodo(b);
-    if (!d.nombre || !d.numero) throw new ErrorHttp(400, 'El periodo necesita nombre y orden.');
+    // El orden es automático: si no se envía, toma el siguiente número libre del año.
+    if (!d.numero) {
+      const usados = anio.cronograma.periodos.map((p) => p.numero || 0);
+      d.numero = (usados.length ? Math.max(...usados) : 0) + 1;
+    }
+    if (!d.nombre) d.nombre = `Periodo ${d.numero}`;
+    if (d.numero > MAX_PERIODOS) throw new ErrorHttp(400, `Este año ya tiene el máximo de ${MAX_PERIODOS} periodos.`);
     validarNumeroPeriodos(d.numero);
     if (anio.cronograma.periodos.some((p) => p.numero === d.numero)) {
       throw new ErrorHttp(409, `Ya existe el periodo ${d.numero} en ese año.`);

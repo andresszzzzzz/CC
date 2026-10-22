@@ -7,6 +7,9 @@ import { useConfigInstitucional } from '@/composables/useConfigInstitucional'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
 import { mezclarConfig, validarConfig, desempeno } from '@/utils/calificacion'
 import '@/styles/secretaria-ui.css'
+import { useNotificacionesStore } from '@/stores/notificaciones'
+
+const notif = useNotificacionesStore()
 
 const { periodos, cargar } = useCatalogos()
 const { anioActivo } = useContextoInstitucional()
@@ -36,7 +39,10 @@ const pasos = computed(() => 1 / 10 ** cfg.value.escala.decimales)
 
 function agregarRango() { cfg.value.rangos.push({ nombre: '', desde: cfg.value.escala.min, hasta: cfg.value.escala.min }) }
 function agregarActividad() { cfg.value.pesosActividad.push({ nombre: '', porcentaje: 0 }) }
-function restaurar() { if (confirm('¿Volver a los valores recomendados (1.0 a 5.0, Bajo/Básico/Alto/Superior)?')) cfg.value = mezclarConfig() }
+async function restaurar() {
+  const si = await notif.confirmar('Se volverá a los valores recomendados (1.0 a 5.0, Bajo/Básico/Alto/Superior).', { titulo: '¿Estás seguro?', textoSi: 'Sí, restaurar', peligro: false })
+  if (si) cfg.value = mezclarConfig()
+}
 
 async function guardar() {
   msg.value = ''
@@ -62,8 +68,8 @@ async function guardar() {
 
     <div v-if="cargando" class="sec-vacio">Cargando…</div>
     <template v-else>
-      <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-      <div v-if="errores.length" class="sec-msg sec-msg--err"><p v-for="e in errores" :key="e">• {{ e }}</p></div>
+      <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+      <div v-if="errores.length" class="alert alert-danger" role="alert"><strong>¡Error!</strong> Revisa lo siguiente:<ul class="mb-0 mt-1"><li v-for="e in errores" :key="e">{{ e }}</li></ul></div>
 
       <section class="sec-panel">
         <h3>Escala numérica</h3>

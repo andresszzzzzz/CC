@@ -7,6 +7,9 @@ import { urlPublica } from '@/services/api'
 import { useConfigInstitucional } from '@/composables/useConfigInstitucional'
 import { useCatalogos } from '@/composables/useCatalogos'
 import '@/styles/secretaria-ui.css'
+import { useNotificacionesStore } from '@/stores/notificaciones'
+
+const notif = useNotificacionesStore()
 
 const { institucion, cargar, recargar } = useConfigInstitucional()
 const { nombrePersona, institucionId } = useCatalogos()
@@ -32,15 +35,20 @@ async function subirGaleria(e) {
   }
   e.target.value = ''
 }
-async function quitarGaleria(g, i) { if (confirm('¿Eliminar esta foto?')) { await imagenesApi.eliminar('institucional', g._id).catch(() => {}); galeria.value.splice(i, 1) } }
+async function quitarGaleria(g, i) {
+  if (!(await notif.confirmar('La foto se quitará de la galería.', { titulo: '¿Eliminar esta foto?', textoSi: 'Sí, eliminar' }))) return
+  await imagenesApi.eliminar('institucional', g._id).catch(() => {})
+  galeria.value.splice(i, 1)
+  notif.exito('La foto se eliminó correctamente.', '¡Foto eliminada!')
+}
 </script>
 
 <template>
   <AppLayout>
     <template #header-title><h2>Fotografías</h2><p>Sube y reemplaza las imágenes de la institución y de las personas.</p></template>
     <div class="sec-fila" style="margin-bottom:14px"><button v-for="t in TABS" :key="t[0]" class="sec-btn" :class="{ 'sec-btn--sec': tab !== t[0] }" @click="tab = t[0]">{{ t[1] }}</button></div>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
 
     <section v-if="tab === 'colegio'" class="sec-panel" style="max-width:560px">
       <ImageUploader :model-value="institucion.fotoUrl" tipo="colegio" etiqueta="Foto del colegio" :contener="false" :altura="220" @subido="(u) => guardarCampo('fotoUrl', u)" />

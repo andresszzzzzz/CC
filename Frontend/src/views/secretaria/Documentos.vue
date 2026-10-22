@@ -49,7 +49,7 @@ async function generar(demo = false) {
 <template>
   <AppLayout>
     <template #header-title><h2>Boletines y documentos</h2><p>PDF con el escudo, datos, escala de notas y firmas configurados en Secretaría.</p></template>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <section class="sec-panel">
       <div class="sec-grid">
         <label class="sec-campo">Documento<select v-model="tipo"><option v-for="t in TIPOS" :key="t[0]" :value="t[0]">{{ t[1] }}</option></select></label>

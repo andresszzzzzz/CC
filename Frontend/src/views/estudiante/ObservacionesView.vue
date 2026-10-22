@@ -60,7 +60,7 @@ onMounted(cargarDatos)
     </template>
 
     <div v-if="cargando" class="estado-carga">Cargando observaciones…</div>
-    <div v-else-if="error" class="estado-error">{{ error }}</div>
+    <div v-else-if="error" class="alert alert-danger" role="alert"><strong>¡Error!</strong> {{ error }}</div>
 
     <template v-else>
       <div class="metrics-grid">

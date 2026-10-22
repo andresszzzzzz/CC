@@ -39,7 +39,7 @@ onMounted(cargarDatos)
     </template>
 
     <div v-if="cargando" class="estado-carga">Cargando comunicados…</div>
-    <div v-else-if="error" class="estado-error">{{ error }}</div>
+    <div v-else-if="error" class="alert alert-danger" role="alert"><strong>¡Error!</strong> {{ error }}</div>
 
     <div v-else class="card-box">
       <div class="card-header-flex">
