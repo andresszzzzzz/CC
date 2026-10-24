@@ -24,6 +24,7 @@ export const MENU_SECRETARIA = [
     { icono: '🎓', icon: 'graduation-cap', titulo: 'Ciclos', ruta: '/secretaria/ciclos', desc: 'Preescolar a media' },
     { icono: '🎓', icon: 'graduation-cap', titulo: 'Grados', ruta: '/secretaria/grados', desc: 'Grados por ciclo' },
     { icono: '👥', icon: 'layers', titulo: 'Grupos / cursos', ruta: '/secretaria/grupos', desc: 'Cursos de cada año' },
+    { icono: '🧩', icon: 'users', titulo: 'Organización de grupos', ruta: '/secretaria/organizacion-grupos', desc: 'Director, docentes y estudiantes del grupo' },
     { icono: '📚', icon: 'book-open', titulo: 'Áreas', ruta: '/secretaria/areas', desc: 'Agrupan asignaturas' },
     { icono: '📖', icon: 'book', titulo: 'Asignaturas', ruta: '/secretaria/asignaturas', desc: 'Dentro de cada área' },
     { icono: '🧑‍🏫', icon: 'clipboard-list', titulo: 'Asignación académica', ruta: '/secretaria/asignacion', desc: 'Asignatura, grado y docente' },

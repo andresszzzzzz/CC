@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -146,7 +146,17 @@ const rolTexto = computed(() => {
   return 'Acudiente'
 })
 
+// Menú del perfil (arriba a la derecha): ahí vive «Cerrar sesión», igual que en las demás vistas
+const menuPerfilAbierto = ref(false)
+const alternarMenuPerfil = () => { menuPerfilAbierto.value = !menuPerfilAbierto.value }
+const cerrarMenuAlHacerClicFuera = (e) => {
+  if (!e.target.closest('.user-profile-container')) menuPerfilAbierto.value = false
+}
+onMounted(() => document.addEventListener('click', cerrarMenuAlHacerClicFuera))
+onUnmounted(() => document.removeEventListener('click', cerrarMenuAlHacerClicFuera))
+
 const cerrarSesion = () => {
+  menuPerfilAbierto.value = false
   auth.cerrarSesion()
   router.push('/login')
 }
@@ -188,14 +198,6 @@ const cerrarSesion = () => {
         </div>
       </div>
 
-      <div class="sidebar-footer">
-        <button class="logout-btn" @click="cerrarSesion" :title="!isSidebarOpen ? 'Cerrar sesión' : ''">
-          <span class="menu-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span v-if="isSidebarOpen" class="menu-text">Cerrar sesión</span>
-        </button>
-      </div>
     </aside>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -210,11 +212,21 @@ const cerrarSesion = () => {
         </div>
 
         <div class="user-nav-right">
-          <div class="user-profile">
-            <div class="avatar-circle">{{ auth.iniciales || 'DN' }}</div>
-            <div class="user-info">
-              <span class="user-name">{{ auth.nombreCompleto || 'Director' }}</span>
-              <span class="user-role">{{ rolTexto }}</span>
+          <div class="user-profile-container">
+            <button type="button" class="user-profile" :aria-expanded="menuPerfilAbierto" @click="alternarMenuPerfil">
+              <div class="avatar-circle">{{ auth.iniciales || 'DN' }}</div>
+              <div class="user-info">
+                <span class="user-name">{{ auth.nombreCompleto || 'Director' }}</span>
+                <span class="user-role">{{ rolTexto }}</span>
+              </div>
+              <span class="dropdown-arrow">▼</span>
+            </button>
+
+            <div v-if="menuPerfilAbierto" class="profile-dropdown-menu">
+              <button type="button" class="dropdown-item-custom text-danger" @click="cerrarSesion">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Cerrar sesión
+              </button>
             </div>
           </div>
         </div>
@@ -337,29 +349,6 @@ const cerrarSesion = () => {
 }
 .menu-text { margin-left: 12px; flex: 1; }
 
-.sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
-
-.logout-btn {
-  background: rgba(0, 0, 0, 0.1);
-  border: none;
-  color: #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  cursor: pointer;
-  width: 100%;
-  padding: 12px 0;
-  border-radius: 12px;
-}
-.sidebar:not(.collapsed) .logout-btn {
-  justify-content: flex-start;
-  padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-.logout-btn:hover { background: rgba(239, 68, 68, 0.25); color: #fca5a5; }
-
 .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
 .top-navbar {
@@ -377,7 +366,14 @@ const cerrarSesion = () => {
 
 .user-nav-right { display: flex; align-items: center; gap: 20px; }
 
-.user-profile { display: flex; align-items: center; gap: 12px; border-left: 1px solid #e2e8f0; padding-left: 20px; }
+.user-profile-container { position: relative; }
+.user-profile { display: flex; align-items: center; gap: 12px; border: 0; border-left: 1px solid #e2e8f0; background: none; padding: 0 0 0 20px; cursor: pointer; user-select: none; text-align: left; font: inherit; }
+.user-profile:hover { opacity: 0.85; }
+.dropdown-arrow { font-size: 10px; color: #64748b; margin-left: 4px; }
+.profile-dropdown-menu { position: absolute; top: calc(100% + 14px); right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); width: 180px; padding: 6px; z-index: 100; }
+.dropdown-item-custom { background: none; border: none; width: 100%; text-align: left; padding: 9px 12px; font-size: 13px; font-weight: 600; color: #1e293b; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+.dropdown-item-custom.text-danger { color: #dc2626; }
+.dropdown-item-custom.text-danger:hover { background: #fef2f2; }
 .avatar-circle {
   width: 40px; height: 40px;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);

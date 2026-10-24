@@ -18,7 +18,8 @@ const notif = useNotificacionesStore()
   </div>
 
   <!-- Alerta de confirmación -->
-  <div v-if="notif.dialogo" class="notif-fondo" @click.self="notif.responderDialogo(false)">
+  <!-- Persistente: hay que elegir una opción; el clic afuera no cierra -->
+  <div v-if="notif.dialogo" class="notif-fondo">
     <div class="alert alert-warning shadow notif-confirm" role="alert">
       <strong>{{ notif.dialogo.titulo }}</strong> {{ notif.dialogo.mensaje }}
 

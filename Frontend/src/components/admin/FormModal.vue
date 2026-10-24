@@ -46,6 +46,13 @@ function inicializar() {
 // Se reinicia cada vez que se abre (para que "Nuevo" salga limpio y "Editar" salga con datos).
 watch(() => props.abierto, (abierto) => { if (abierto) inicializar() }, { immediate: true })
 
+// Al hacer clic en el fondo la caja se sacude un instante (como el backdrop «static» de Bootstrap)
+const sacudida = ref(false)
+function sacudir() {
+  sacudida.value = true
+  setTimeout(() => { sacudida.value = false }, 250)
+}
+
 const opcionesDe = (c) => (typeof c.opciones === 'function' ? c.opciones() : c.opciones || [])
 
 const vacio = (v) => v === '' || v === null || v === undefined
@@ -84,8 +91,9 @@ function enviar() {
 </script>
 
 <template>
-  <div v-if="abierto" class="modal-fondo" @click.self="$emit('cerrar')">
-    <div class="modal-caja">
+  <!-- Modal persistente: NO se cierra al hacer clic afuera (así no se pierde lo escrito); solo con la X o «Cancelar» -->
+  <div v-if="abierto" class="modal-fondo" @click.self="sacudir">
+    <div :class="['modal-caja', { 'modal-caja--aviso': sacudida }]">
       <div class="modal-cabecera">
         <h3>{{ titulo }}</h3>
         <button type="button" class="modal-x" @click="$emit('cerrar')">&times;</button>
@@ -142,6 +150,8 @@ function enviar() {
 <style scoped>
 .modal-fondo { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
 .modal-caja { background: white; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); }
+.modal-caja--aviso { transform: scale(1.02); }
+.modal-caja { transition: transform 0.2s ease; }
 .modal-cabecera { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; }
 .modal-cabecera h3 { font-size: 17px; font-weight: 700; color: #0f172a; text-transform: capitalize; }
 .modal-x { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; line-height: 1; }

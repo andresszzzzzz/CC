@@ -51,6 +51,7 @@ const vistasSecretaria = {
   acudientes: () => import('../views/secretaria/Acudientes.vue'),
   usuarios: () => import('../views/secretaria/Usuarios.vue'),
   grupos: () => import('../views/secretaria/Grupos.vue'),
+  'organizacion-grupos': () => import('../views/secretaria/OrganizacionGrupos.vue'),
   areas: () => import('../views/secretaria/Areas.vue'),
   // --- Secretaría ampliada ---
   institucion: () => import('../views/secretaria/InformacionInstitucional.vue'),

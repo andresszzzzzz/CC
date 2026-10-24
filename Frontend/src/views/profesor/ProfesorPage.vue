@@ -2490,11 +2490,17 @@ const normalizarEstudiantes = (datos: any, asumirEstudiante = false): any[] => {
   for (const original of lista) {
     if (!original || typeof original !== "object") continue;
     // Algunas APIs devuelven matrículas que contienen el usuario/estudiante anidado.
-    const item = original.estudiante || original.alumno || original.usuario || original;
+    // /api/matriculas devuelve la MATRÍCULA con el estudiante dentro de "estudianteId".
+    // Hay que usar el id del ESTUDIANTE (no el de la matrícula): si no, las notas se guardan
+    // a nombre de un id que no existe y el estudiante nunca las ve.
+    const refEstudiante = original.estudianteId;
+    const estudianteAnidado = refEstudiante && typeof refEstudiante === "object" ? refEstudiante : null;
+    const item = original.estudiante || original.alumno || estudianteAnidado || original.usuario || original;
     const rol = rolNormalizado(item) || rolNormalizado(original);
     const candidato = { ...original, ...item, rol: rol || item?.rol };
     if (!esEstudiante(candidato, asumirEstudiante)) continue;
-    const id = idDe(candidato) || idDe(original) || String(candidato.codigo || candidato.documento || nombrePersona(candidato));
+    const idEstudianteReal = refEstudiante ? String(estudianteAnidado ? (estudianteAnidado._id || estudianteAnidado.id || "") : refEstudiante) : "";
+    const id = idEstudianteReal || idDe(candidato) || idDe(original) || String(candidato.codigo || candidato.documento || nombrePersona(candidato));
     normalizados.push({ ...candidato, id, nombre: nombrePersona(candidato) });
   }
   return normalizados.filter((item, index, arr) => arr.findIndex((x) => String(x.id) === String(item.id)) === index);
@@ -2543,6 +2549,36 @@ const buscarEstudiantesGrupo = async (grupoId: string): Promise<any[]> => {
   return [];
 };
 
+const idSimple = (v: any) => String(v && typeof v === "object" ? (v._id || v.id || "") : (v || ""));
+
+const mensajeDeRespuesta = async (respuesta: Response, porDefecto: string) => {
+  try {
+    const d = await respuesta.json();
+    return d?.mensaje || d?.error || porDefecto;
+  } catch {
+    return porDefecto;
+  }
+};
+
+// Notas que YA existen en el servidor para el grupo, la asignatura y el periodo elegidos.
+const notasDelServidor = async (): Promise<any[]> => {
+  const token = obtenerToken();
+  if (!token || !grupoCalificacionesId.value || !asignaturaCalificacionesId.value) return [];
+  try {
+    const q = new URLSearchParams({
+      grupoId: String(grupoCalificacionesId.value),
+      asignaturaId: String(asignaturaCalificacionesId.value),
+      periodo: String(periodoCalificaciones.value),
+    });
+    const respuesta = await fetch(`/api/calificaciones?${q.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!respuesta.ok) return [];
+    const datos = await respuesta.json();
+    return Array.isArray(datos) ? datos : [];
+  } catch {
+    return [];
+  }
+};
+
 const cargarEstudiantesParaCalificar = async () => {
   estudiantesCalificaciones.value = [];
   estudianteCalificacionId.value = "";
@@ -2551,14 +2587,9 @@ const cargarEstudiantesParaCalificar = async () => {
   if (!estudiantes.length) {
     mostrarMensaje("No se encontraron estudiantes para este grupo. Comprueba que estén matriculados y que el backend exponga la lista de estudiantes del grupo.", "error");
   }
-  const guardadas = leerLocal("calificaciones");
+  const guardadas = await notasDelServidor();
   estudiantesCalificaciones.value = estudiantes.map((estudiante: any) => {
-    const anterior = guardadas.find((item: any) =>
-      item.estudianteId === estudiante.id &&
-      item.grupoId === grupoCalificacionesId.value &&
-      item.asignaturaId === asignaturaCalificacionesId.value &&
-      Number(item.periodo) === Number(periodoCalificaciones.value)
-    );
+    const anterior = guardadas.find((item: any) => idSimple(item.estudianteId) === String(estudiante.id));
     return { ...estudiante, nota: anterior?.nota ?? null, observacion: anterior?.observacion || "" };
   });
   if (!estudiantesCalificaciones.value.some((e: any) => String(e.id) === String(estudianteCalificacionId.value))) {
@@ -2584,43 +2615,57 @@ const guardarCalificaciones = async () => {
   }
 
   guardandoCalificaciones.value = true;
-  const actuales = leerLocal("calificaciones");
-  const token = obtenerToken();
-  const payload = estudiantesCalificacionesVisibles.value.map((e: any) => ({
-    estudianteId: e.id,
-    estudianteNombre: e.nombre,
-    docenteId: usuario?.id || usuario?._id,
-    grupoId: grupoCalificacionesId.value,
-    asignaturaId: asignaturaCalificacionesId.value,
-    periodo: periodoCalificaciones.value,
-    nota: e.nota === "" ? null : e.nota,
-    observacion: e.observacion || "",
-    actualizadoEn: new Date().toISOString(),
-  }));
-  const fusionadas = [...actuales];
-  payload.forEach((item: any) => {
-    const index = fusionadas.findIndex((prev: any) =>
-      prev.estudianteId === item.estudianteId && prev.grupoId === item.grupoId &&
-      prev.asignaturaId === item.asignaturaId && Number(prev.periodo) === Number(item.periodo)
-    );
-    if (index >= 0) fusionadas[index] = item;
-    else fusionadas.push(item);
-  });
-
   try {
-    let respuestaOk = false;
-    if (token) {
-      try {
-        const respuesta = await fetch("/api/calificaciones", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ calificaciones: payload }),
-        });
-        respuestaOk = respuesta.ok;
-      } catch { /* Se conserva en local si la API no responde. */ }
+    const token = obtenerToken();
+    if (!token) {
+      mostrarMensaje("Tu sesión expiró. Vuelve a iniciar sesión para guardar las notas.", "error");
+      return;
     }
-    guardarLocal("calificaciones", fusionadas);
-    mostrarMensaje(respuestaOk ? "Calificaciones enviadas al servidor y guardadas." : "Calificaciones guardadas en este navegador. Verifica la conexión del backend para sincronizarlas.", "exito");
+    const grupo = grupos.value.find((g: any) => idDe(g) === String(grupoCalificacionesId.value));
+    const anioId = idSimple(grupo?.anioAcademicoId);
+    if (!anioId) {
+      mostrarMensaje("No se pudo determinar el año escolar del grupo elegido.", "error");
+      return;
+    }
+    const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+    const docenteId = usuario?.id || usuario?._id;
+    const existentes = await notasDelServidor();
+
+    let guardadas = 0;
+    const fallos: string[] = [];
+    for (const e of estudiantesCalificacionesVisibles.value) {
+      if (e.nota === null || e.nota === "" || e.nota === undefined) continue;
+      const cuerpo = { nota: Number(e.nota), observacion: e.observacion || "", docenteId };
+      const previa = existentes.find((n: any) => idSimple(n.estudianteId) === String(e.id));
+      try {
+        const respuesta = previa
+          ? await fetch(`/api/calificaciones/${previa._id}`, { method: "PUT", headers, body: JSON.stringify(cuerpo) })
+          : await fetch("/api/calificaciones", {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                ...cuerpo,
+                anioAcademicoId: anioId,
+                estudianteId: e.id,
+                asignaturaId: asignaturaCalificacionesId.value,
+                grupoId: grupoCalificacionesId.value,
+                periodo: Number(periodoCalificaciones.value),
+              }),
+            });
+        if (respuesta.ok) guardadas++;
+        else fallos.push(`${e.nombre}: ${await mensajeDeRespuesta(respuesta, "no se pudo guardar")}`);
+      } catch {
+        fallos.push(`${e.nombre}: no hay conexión con el servidor`);
+      }
+    }
+
+    if (!guardadas && !fallos.length) {
+      mostrarMensaje("Escribe al menos una nota antes de guardar.", "error");
+    } else if (fallos.length) {
+      mostrarMensaje(`Se guardaron ${guardadas} nota(s) y fallaron ${fallos.length}. ${fallos[0]}`, "error");
+    } else {
+      mostrarMensaje(`Calificaciones guardadas en el servidor (${guardadas}). Los estudiantes ya pueden verlas.`, "exito");
+    }
   } finally {
     guardandoCalificaciones.value = false;
   }
@@ -2691,11 +2736,19 @@ const cargarObservaciones = async () => {
   const token = obtenerToken();
   if (!token) return;
   try {
-    const respuesta = await fetch("/api/observaciones", { headers: { Authorization: `Bearer ${token}` } });
+    const respuesta = await fetch("/api/observador", { headers: { Authorization: `Bearer ${token}` } });
     if (!respuesta.ok) return;
     const datos = await respuesta.json();
     const lista = Array.isArray(datos) ? datos : datos?.observaciones || datos?.data || [];
-    if (lista.length) observaciones.value = lista.map((o: any) => ({ ...o, id: idDe(o) || o.id || `${Date.now()}-${Math.random()}` }));
+    const miId = String(usuario?.id || usuario?._id || "");
+    observaciones.value = lista
+      .filter((o: any) => !miId || idSimple(o.docenteId) === miId)
+      .map((o: any) => ({
+        ...o,
+        id: idDe(o) || o.id || `${Date.now()}-${Math.random()}`,
+        estudianteNombre: o.estudianteNombre || [o.estudianteId?.nombres, o.estudianteId?.apellidos].filter(Boolean).join(" ") || "Estudiante",
+        fecha: String(o.fecha || "").slice(0, 10),
+      }));
   } catch { /* se usan registros locales */ }
 };
 
@@ -2718,12 +2771,29 @@ const crearObservacion = async () => {
   const token = obtenerToken();
   if (token) {
     try {
-      const respuesta = await fetch("/api/observaciones", {
+      const grupoElegido = grupos.value.find((g: any) => idDe(g) === form.grupoId);
+      const tipoBackend: Record<string, string> = { academica: "academico", convivencia: "convivencia", positiva: "convivencia", seguimiento: "academico" };
+      const etiqueta = form.tipo === "positiva" ? "[Positiva] " : form.tipo === "seguimiento" ? "[Seguimiento] " : "";
+      const respuesta = await fetch("/api/observador", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(item),
+        body: JSON.stringify({
+          anioAcademicoId: idSimple(grupoElegido?.anioAcademicoId),
+          estudianteId: form.estudianteId,
+          tipo: tipoBackend[form.tipo] || "academico",
+          fecha: form.fecha,
+          descripcion: `${etiqueta}${item.descripcion}`,
+          docenteId: usuario?.id || usuario?._id,
+        }),
       });
       remoto = respuesta.ok;
-    } catch { /* respaldo local */ }
+      if (!remoto) {
+        mostrarMensaje(await mensajeDeRespuesta(respuesta, "No se pudo guardar la observación en el servidor."), "error");
+        return;
+      }
+    } catch {
+      mostrarMensaje("No hay conexión con el servidor: la observación no se guardó.", "error");
+      return;
+    }
   }
   observaciones.value.unshift(item);
   guardarLocal("observaciones", observaciones.value);
@@ -2738,7 +2808,7 @@ const eliminarObservacion = async (id: string) => {
   guardarLocal("observaciones", observaciones.value);
   const token = obtenerToken();
   if (token) {
-    try { await fetch(`/api/observaciones/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
+    try { await fetch(`/api/observador/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
   }
   mostrarMensaje("Observación eliminada de la lista.", "exito");
 };
@@ -4491,5 +4561,3 @@ const cerrarSesion = () => {
   }
 }
 </style>
-
-
