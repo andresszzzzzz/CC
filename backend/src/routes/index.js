@@ -192,6 +192,13 @@ router.use('/actividades', crearRouterCrud(actividad, {
   }
 }));
 
+// --- Cronograma institucional del coordinador (no confundir con tareas escolares) ---
+const eventoCalendario = require('../controllers/eventocalendario.controller');
+router.use('/eventos-calendario', crearRouterCrud(eventoCalendario, {
+  listar: 'obtenerEventos', obtener: 'obtenerEvento', crear: 'crearEvento',
+  actualizar: 'actualizarEvento', eliminar: 'eliminarEvento'
+}, { modelo: M.EventoCalendario, lectura: GESTION, escritura: ['admin', 'rector', 'coordinador'] }));
+
 // --- Convivencia y comunicación ------------------------------------------
 const observador = require('../controllers/observador.controller');
 router.use('/observador', crearRouterCrud(observador, {
@@ -258,7 +265,9 @@ router.use('/votos', crearRouterCrud(voto, {
   lectura: GESTION,
   permisos: { crear: ['estudiante'], actualizar: ['admin', 'rector'], eliminar: ['admin', 'rector'] },
   extras: (r, guarda) => {
-    r.get('/resultados/:eventoId', ...guarda('listar'), handler(voto, 'obtenerResultados'));
+    // Los resultados públicos pueden verse con cualquier sesión del colegio; el controlador
+    // comprueba institución y bandera resultadosPublicos. Los listados de votos siguen reservados.
+    r.get('/resultados/:eventoId', handler(voto, 'obtenerResultados'));
   }
 }));
 

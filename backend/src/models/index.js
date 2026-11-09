@@ -10,6 +10,7 @@ module.exports = {
   Matricula: require('./Matricula'),
   Indicador: require('./Indicador'),
   Actividad: require('./Actividad'),
+  EventoCalendario: require('./EventoCalendario'),
   Calificacion: require('./Calificacion'),
   DireccionNucleo: require('./DireccionNucleo'),
   Bitacora: require('./Bitacora'),

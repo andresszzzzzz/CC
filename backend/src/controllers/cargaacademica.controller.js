@@ -4,7 +4,10 @@ const { filtroTenant } = require('../utils/tenant');
 // Obtener todas las cargas académicas
 const obtenerCargasAcademicas = async (req, res) => {
   try {
-    const cargas = await CargaAcademica.find(filtroTenant(req))
+    const filtro = filtroTenant(req);
+    // El docente solo necesita conocer su propia carga académica.
+    if (req.usuario?.tipoPerfil === 'docente') filtro.docenteId = req.usuario.id;
+    const cargas = await CargaAcademica.find(filtro)
       .populate('institucionId')
       .populate('anioAcademicoId')
       .populate('grupoId')

@@ -241,15 +241,6 @@
 
           <button
             class="menu-item"
-            :class="{ active: seccionActual === 'perfil' }"
-            @click="irA('perfil')"
-          >
-            <UserCircle :size="20" />
-            <span v-if="!sidebarCollapsed">Perfil</span>
-          </button>
-
-          <button
-            class="menu-item"
             :class="{ active: seccionActual === 'cronograma' }"
             @click="irA('cronograma')"
           >
@@ -290,30 +281,22 @@
         </div>
 
         <div class="topbar-actions">
-          <button class="icon-button">
+          <button class="icon-button" type="button" title="Ver actividad reciente" aria-label="Ver bitácora" @click="irA('bitacora')">
             <Bell :size="20" />
           </button>
 
-          <div class="user-mini">
-            <div class="avatar">
-              {{
-                (
-                  usuario?.nombres?.charAt(0) ||
-                  usuario?.usuario?.charAt(0) ||
-                  "C"
-                ).toUpperCase()
-              }}
-            </div>
-
-            <div class="user-mini-info">
-              <strong>
-                {{
-                  usuario?.nombres
-                    ? `${usuario.nombres} ${usuario.apellidos || ""}`
-                    : usuario?.usuario || "Coordinador"
-                }}
-              </strong>
-              <small>Coordinador</small>
+          <div ref="contenedorPerfil" class="coord-profile-wrap">
+            <button type="button" class="user-mini coord-profile-trigger" :aria-expanded="menuPerfilAbierto" aria-haspopup="true" @click="menuPerfilAbierto = !menuPerfilAbierto">
+              <div class="avatar">{{ (usuario?.nombres?.charAt(0) || usuario?.usuario?.charAt(0) || 'C').toUpperCase() }}</div>
+              <div class="user-mini-info">
+                <strong>{{ usuario?.nombres ? `${usuario.nombres} ${usuario.apellidos || ''}` : usuario?.usuario || 'Coordinador' }}</strong>
+                <small>Coordinador</small>
+              </div>
+              <ChevronDown :size="17" />
+            </button>
+            <div v-if="menuPerfilAbierto" class="coord-profile-menu" role="menu">
+              <button type="button" role="menuitem" @click="abrirPerfil"><UserCircle :size="17" /> Mi perfil</button>
+              <button type="button" role="menuitem" @click="cerrarSesion"><LogOut :size="17" /> Cerrar sesión</button>
             </div>
           </div>
         </div>
@@ -392,7 +375,7 @@
               </div>
               <div>
                 <span>Período</span>
-                <strong>2026</strong>
+                <strong>{{ new Date().getFullYear() }}</strong>
               </div>
             </div>
           </div>
@@ -1960,177 +1943,19 @@
           </template>
         </div>
 
-        <!-- ========================= -->
-        <!-- VISTAS ADMINISTRATIVAS -->
-        <!-- ========================= -->
-
-        <!-- EXCUSAS DOCENTES -->
-        <div
-          v-else-if="seccionActual === 'excusas-docentes'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading">
-            <div>
-              <span class="eyebrow">Gestión</span>
-              <h1>Excusas docentes</h1>
-              <p>Consulta y organiza las excusas registradas por los docentes.</p>
-            </div>
-            <button class="primary-button" type="button">
-              <ClipboardX :size="18" />
-              Registrar excusa
-            </button>
-          </div>
-          <div class="module-toolbar">
-            <div class="fake-search"><Search :size="18" /><span>Buscar docente o motivo...</span></div>
-            <div class="fake-select">Todos los estados <ChevronRight :size="16" /></div>
-            <div class="fake-select">Período académico <ChevronRight :size="16" /></div>
-          </div>
-          <div class="visual-table-card">
-            <div class="visual-table-head"><span>Docente</span><span>Fecha</span><span>Motivo</span><span>Estado</span><span>Acción</span></div>
-            <div v-for="(item, i) in ['Laura Gómez','Carlos Ramírez','Andrea Martínez']" :key="item" class="visual-table-row">
-              <div class="person-cell"><div class="mini-avatar">{{ item.charAt(0) }}</div><strong>{{ item }}</strong></div>
-              <span>12/09/2026</span><span>{{ ['Cita médica','Calamidad familiar','Permiso institucional'][i] }}</span>
-              <span class="status-badge success">{{ i === 1 ? 'Aprobada' : 'Pendiente' }}</span>
-              <button class="table-action" type="button">Ver detalle</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CERTIFICADOS -->
-        <div
-          v-else-if="seccionActual === 'certificados'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Gestión</span><h1>Certificados</h1><p>Genera certificados académicos para los estudiantes de la institución.</p></div></div>
-          <div class="visual-form-card">
-            <div class="visual-form-title"><div class="large-module-icon blue"><Award :size="24" /></div><div><h2>Generar certificado</h2><p>Selecciona el estudiante y el tipo de certificado.</p></div></div>
-            <div class="visual-form-grid">
-              <div class="fake-field"><label>Estudiante</label><div class="fake-input">Selecciona un estudiante <ChevronRight :size="16" /></div></div>
-              <div class="fake-field"><label>Tipo de certificado</label><div class="fake-input">Certificado de estudios <ChevronRight :size="16" /></div></div>
-              <div class="fake-field"><label>Fecha de expedición</label><div class="fake-input">18 de septiembre de 2026</div></div>
-              <div class="fake-field"><label>Observación</label><div class="fake-input">Sin observaciones</div></div>
-            </div>
-            <div class="form-preview"><FileText :size="22" /><div><strong>Vista previa del certificado</strong><span>Documento listo para generar en formato PDF.</span></div><button class="secondary-button" type="button">Vista previa</button></div>
-            <div class="visual-form-actions"><button class="secondary-button" type="button">Cancelar</button><button class="primary-button" type="button"><FileText :size="17" /> Generar certificado</button></div>
-          </div>
-        </div>
-
-        <!-- CONSTANCIAS -->
-        <div
-          v-else-if="seccionActual === 'constancias'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Gestión</span><h1>Constancias</h1><p>Prepara constancias académicas y administrativas para los estudiantes.</p></div></div>
-          <div class="document-options-grid">
-            <div class="document-option"><div class="large-module-icon green"><FileCheck :size="24" /></div><h3>Constancia de estudios</h3><p>Acredita que el estudiante se encuentra matriculado.</p><button class="secondary-button" type="button">Seleccionar</button></div>
-            <div class="document-option"><div class="large-module-icon blue"><FileText :size="24" /></div><h3>Constancia de matrícula</h3><p>Presenta información básica del proceso de matrícula.</p><button class="secondary-button" type="button">Seleccionar</button></div>
-            <div class="document-option"><div class="large-module-icon purple"><ClipboardCheck :size="24" /></div><h3>Constancia académica</h3><p>Resume el estado académico actual del estudiante.</p><button class="secondary-button" type="button">Seleccionar</button></div>
-          </div>
-        </div>
-
-        <!-- CANDIDATOS -->
-        <div
-          v-else-if="seccionActual === 'candidatos'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Elecciones</span><h1>Candidatos</h1><p>Visualiza los candidatos registrados para los procesos electorales.</p></div><button class="primary-button" type="button"><UserRoundCheck :size="18" /> Nuevo candidato</button></div>
-          <div class="candidate-grid">
-            <div v-for="(candidate, i) in ['María Fernanda López','Juan Sebastián Pérez','Laura Valentina Gómez','Carlos Andrés Torres']" :key="candidate" class="candidate-card">
-              <div class="candidate-cover"></div><div class="candidate-avatar">{{ candidate.split(' ').map(x => x[0]).slice(0,2).join('') }}</div><div class="candidate-body"><span class="candidate-role">Personería estudiantil</span><h3>{{ candidate }}</h3><p>Grado {{ 10 + (i % 2) }}-0{{ i + 1 }}</p><div class="candidate-status"><span class="status-badge success">Activo</span><span>Propuesta {{ i + 1 }}</span></div></div><div class="candidate-actions"><button class="table-action" type="button">Ver perfil</button><button class="table-action" type="button">Editar</button></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- EVENTOS ELECTORALES -->
-        <div
-          v-else-if="seccionActual === 'eventos-electorales'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Elecciones</span><h1>Eventos electorales</h1><p>Organiza visualmente los procesos y jornadas electorales de la institución.</p></div><button class="primary-button" type="button"><Vote :size="18" /> Nuevo evento</button></div>
-          <div class="election-timeline">
-            <div class="election-event active-event"><div class="event-date"><strong>25</strong><span>SEP</span></div><div class="event-line"></div><div class="event-content"><div class="event-top"><span class="status-badge success">Activo</span><span>2026</span></div><h2>Elección de personero estudiantil</h2><p>Jornada principal de votación para la comunidad estudiantil.</p><div class="event-meta"><span><CalendarDays :size="16" /> 8:00 a. m. - 2:00 p. m.</span><span><Users :size="16" /> 5 candidatos</span></div></div></div>
-            <div class="election-event"><div class="event-date"><strong>20</strong><span>SEP</span></div><div class="event-line"></div><div class="event-content"><div class="event-top"><span class="status-badge neutral">Programado</span><span>2026</span></div><h2>Debate de candidatos</h2><p>Espacio institucional para presentación de propuestas.</p><div class="event-meta"><span><CalendarDays :size="16" /> 10:00 a. m.</span><span><Users :size="16" /> Auditorio</span></div></div></div>
-          </div>
-        </div>
-
-        <!-- PERMISOS -->
-        <div
-          v-else-if="seccionActual === 'permisos'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Elecciones</span><h1>Permisos</h1><p>Administra visualmente los permisos asociados al proceso electoral.</p></div></div>
-          <div class="permissions-card">
-            <div class="permission-row"><div class="permission-icon blue"><KeyRound :size="20" /></div><div class="permission-copy"><strong>Gestión de candidatos</strong><span>Permite registrar y modificar candidatos.</span></div><div class="fake-toggle on"></div></div>
-            <div class="permission-row"><div class="permission-icon purple"><Vote :size="20" /></div><div class="permission-copy"><strong>Administración de elecciones</strong><span>Permite configurar eventos electorales.</span></div><div class="fake-toggle on"></div></div>
-            <div class="permission-row"><div class="permission-icon green"><Trophy :size="20" /></div><div class="permission-copy"><strong>Consulta de resultados</strong><span>Permite consultar los resultados publicados.</span></div><div class="fake-toggle"></div></div>
-            <div class="permission-row"><div class="permission-icon orange"><Users :size="20" /></div><div class="permission-copy"><strong>Votación estudiantil</strong><span>Habilita la participación de los estudiantes.</span></div><div class="fake-toggle on"></div></div>
-          </div>
-        </div>
-
-        <!-- RESULTADOS -->
-        <div
-          v-else-if="seccionActual === 'resultados'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Elecciones</span><h1>Resultados</h1><p>Consulta los resultados del proceso electoral seleccionado.</p></div><button class="secondary-button" type="button"><RefreshCw :size="17" /> Actualizar</button></div>
-          <div class="result-summary"><div><span>Votos registrados</span><strong>248</strong></div><div><span>Participación</span><strong>82%</strong></div><div><span>Candidatos</span><strong>4</strong></div><div><span>Estado</span><strong class="result-open">Publicado</strong></div></div>
-          <div class="results-card"><div class="results-header"><div><h2>Personería estudiantil 2026</h2><p>Resultados de la jornada electoral.</p></div></div><div v-for="(name, i) in ['María Fernanda López','Juan Sebastián Pérez','Laura Valentina Gómez','Carlos Andrés Torres']" :key="name" class="result-row"><div class="result-position">{{ i + 1 }}</div><div class="result-person"><div class="mini-avatar">{{ name.charAt(0) }}</div><strong>{{ name }}</strong></div><div class="result-bar"><div class="result-bar-fill" :style="{ width: [46,28,17,9][i] + '%' }"></div></div><strong class="result-votes">{{ [114,69,42,23][i] }} votos</strong></div></div>
-        </div>
-
-        <!-- BOLETÍN DEL ESTUDIANTE -->
-        <div
-          v-else-if="seccionActual === 'boletin-estudiante'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Informes</span><h1>Boletín del estudiante</h1><p>Consulta una vista previa del boletín académico del estudiante.</p></div><button class="primary-button" type="button"><FileText :size="18" /> Generar boletín</button></div>
-          <div class="boletin-layout"><div class="boletin-sidebar"><div class="fake-field"><label>Estudiante</label><div class="fake-input">Juan Pérez <ChevronRight :size="16" /></div></div><div class="fake-field"><label>Grupo</label><div class="fake-input">10-01</div></div><div class="fake-field"><label>Período</label><div class="fake-input">Período 1</div></div><button class="primary-button full-button" type="button"><FileText :size="17" /> Ver boletín</button></div><div class="boletin-preview"><div class="boletin-top"><div class="logo-box small-logo"><span>EN</span></div><div><strong>EasyNotes</strong><span>Institución Educativa de Prueba</span></div><span class="boletin-period">2026 · Período 1</span></div><div class="student-banner"><div class="mini-avatar big">JP</div><div><strong>Juan Pérez</strong><span>10-01 · Estudiante</span></div><div class="preview-average"><small>Promedio</small><strong>4.3</strong></div></div><div class="boletin-subjects"><div v-for="item in [['Matemáticas','4.5'],['Lengua','4.0'],['Ciencias','3.8'],['Tecnología','4.7']]" :key="item[0]"><span>{{ item[0] }}</span><strong>{{ item[1] }}</strong></div></div></div></div>
-        </div>
-
-        <!-- LISTADOS -->
-        <div
-          v-else-if="seccionActual === 'listados'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Informes</span><h1>Listados varios</h1><p>Selecciona el tipo de listado que deseas consultar.</p></div></div>
-          <div class="listing-grid"><div v-for="item in [{icon:'users',title:'Listado de estudiantes',text:'Relación de estudiantes activos por grupo.'},{icon:'groups',title:'Listado de grupos',text:'Consulta los grupos académicos de la institución.'},{icon:'grades',title:'Listado de calificaciones',text:'Resumen de calificaciones por período.'},{icon:'docs',title:'Listado de documentos',text:'Relación de documentos y certificados generados.'}]" :key="item.title" class="listing-card"><div class="large-module-icon blue"><Users v-if="item.icon==='users'" :size="24" /><List v-else-if="item.icon==='groups'" :size="24" /><BarChart3 v-else-if="item.icon==='grades'" :size="24" /><FileText v-else :size="24" /></div><h3>{{ item.title }}</h3><p>{{ item.text }}</p><button class="secondary-button" type="button">Consultar listado</button></div></div>
-        </div>
-
-        <!-- INFORME DE EXCUSAS -->
-        <div
-          v-else-if="seccionActual === 'informe-excusas'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Informes</span><h1>Informe de excusas</h1><p>Vista resumida de las excusas docentes registradas.</p></div><button class="secondary-button" type="button"><FileWarning :size="17" /> Exportar informe</button></div>
-          <div class="report-metrics"><div><span>Total excusas</span><strong>18</strong></div><div><span>Aprobadas</span><strong>12</strong></div><div><span>Pendientes</span><strong>4</strong></div><div><span>Rechazadas</span><strong>2</strong></div></div>
-          <div class="visual-table-card"><div class="visual-table-head"><span>Mes</span><span>Aprobadas</span><span>Pendientes</span><span>Rechazadas</span><span>Total</span></div><div v-for="row in [['Agosto','6','1','1','8'],['Septiembre','6','3','1','10']]" :key="row[0]" class="visual-table-row"><strong>{{ row[0] }}</strong><span>{{ row[1] }}</span><span>{{ row[2] }}</span><span>{{ row[3] }}</span><strong>{{ row[4] }}</strong></div></div>
-        </div>
-
-        <!-- BITÁCORA -->
-        <div
-          v-else-if="seccionActual === 'bitacora'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Otros</span><h1>Bitácora</h1><p>Historial visual de las acciones realizadas en el sistema.</p></div><button class="secondary-button" type="button"><RefreshCw :size="17" /> Actualizar</button></div>
-          <div class="bitacora-card"><div v-for="(log, i) in [{title:'Actualización de calificación',desc:'Se actualizó la calificación de Matemáticas de Juan Pérez.',time:'Hoy · 10:42 a. m.',icon:'grade'},{title:'Nueva observación',desc:'Se registró una observación académica para María Gómez.',time:'Hoy · 09:18 a. m.',icon:'obs'},{title:'Generación de boletín',desc:'Se generó el boletín académico del grupo 10-01.',time:'Ayer · 04:35 p. m.',icon:'doc'},{title:'Inicio de sesión',desc:'El coordinador ingresó al sistema.',time:'Ayer · 08:02 a. m.',icon:'login'}]" :key="log.title" class="log-item"><div class="log-icon"><CheckCircle2 v-if="i===0" :size="18" /><Eye v-else-if="i===1" :size="18" /><FileText v-else-if="i===2" :size="18" /><UserCircle v-else :size="18" /></div><div class="log-content"><strong>{{ log.title }}</strong><p>{{ log.desc }}</p><span>{{ log.time }}</span></div><ChevronRight :size="18" /></div></div>
-        </div>
+        <!-- Gestión conectada a MongoDB, sin tarjetas ni datos de demostración. -->
+        <CoordinadorGestion
+          v-else-if="seccionesGestion.includes(seccionActual)"
+          :seccion="seccionActual"
+        />
 
         <!-- PERFIL -->
         <div
           v-else-if="seccionActual === 'perfil'"
           class="page-section visual-module-section"
         >
-          <div class="page-heading"><div><span class="eyebrow">Configuración</span><h1>Perfil</h1><p>Consulta la información del coordinador y las preferencias de la cuenta.</p></div><button class="primary-button" type="button"><CheckCircle2 :size="18" /> Guardar cambios</button></div>
-          <div class="profile-layout"><div class="profile-card profile-summary"><div class="profile-avatar-large">{{ (usuario?.nombres?.charAt(0) || 'C').toUpperCase() }}</div><h2>{{ usuario?.nombres || 'Coordinador' }} {{ usuario?.apellidos || '' }}</h2><span>Coordinador académico</span><div class="profile-tag"><CheckCircle2 :size="15" /> Cuenta activa</div></div><div class="visual-form-card profile-form"><div class="visual-form-title"><div><h2>Información personal</h2><p>Datos básicos de la cuenta.</p></div></div><div class="visual-form-grid"><div class="fake-field"><label>Nombres</label><div class="fake-input">{{ usuario?.nombres || 'Coordinador' }}</div></div><div class="fake-field"><label>Apellidos</label><div class="fake-input">{{ usuario?.apellidos || 'Académico' }}</div></div><div class="fake-field"><label>Usuario</label><div class="fake-input">{{ usuario?.usuario || 'coordinador.prueba' }}</div></div><div class="fake-field"><label>Rol</label><div class="fake-input">Coordinador</div></div><div class="fake-field full-span"><label>Correo electrónico</label><div class="fake-input">coordinador@easynotes.com</div></div></div></div></div>
-        </div>
-
-        <!-- CRONOGRAMA -->
-        <div
-          v-else-if="seccionActual === 'cronograma'"
-          class="page-section visual-module-section"
-        >
-          <div class="page-heading"><div><span class="eyebrow">Otros</span><h1>Cronograma</h1><p>Visualiza las actividades académicas y administrativas programadas.</p></div><button class="primary-button" type="button"><CalendarDays :size="18" /> Nueva actividad</button></div>
-          <div class="calendar-header"><button class="icon-button" type="button">‹</button><h2>Septiembre 2026</h2><button class="icon-button" type="button">›</button></div>
-          <div class="calendar-grid"><div v-for="day in ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']" :key="day" class="calendar-weekday">{{ day }}</div><div v-for="n in 30" :key="n" class="calendar-day" :class="{ today: n === 18, event: [8,15,20,25].includes(n) }"><span>{{ n }}</span><small v-if="n===8">Reunión</small><small v-else-if="n===15">Consejo</small><small v-else-if="n===20">Debate</small><small v-else-if="n===25">Elecciones</small></div></div>
+          <div class="page-heading"><div><span class="eyebrow">Configuración</span><h1>Perfil</h1><p>Consulta la información del coordinador y las preferencias de la cuenta.</p></div></div>
+          <div class="profile-layout"><div class="profile-card profile-summary"><div class="profile-avatar-large">{{ (usuario?.nombres?.charAt(0) || 'C').toUpperCase() }}</div><h2>{{ usuario?.nombres || 'Coordinador' }} {{ usuario?.apellidos || '' }}</h2><span>Coordinador académico</span><div class="profile-tag"><CheckCircle2 :size="15" /> Cuenta activa</div></div><div class="visual-form-card profile-form"><div class="visual-form-title"><div><h2>Información personal</h2><p>Datos básicos de la cuenta.</p></div></div><div class="visual-form-grid"><div class="fake-field"><label>Nombres</label><div class="fake-input">{{ usuario?.nombres || 'Coordinador' }}</div></div><div class="fake-field"><label>Apellidos</label><div class="fake-input">{{ usuario?.apellidos || 'Académico' }}</div></div><div class="fake-field"><label>Usuario</label><div class="fake-input">{{ usuario?.usuario || usuario?.credenciales?.usuario || '—' }}</div></div><div class="fake-field"><label>Rol</label><div class="fake-input">Coordinador</div></div><div class="fake-field full-span"><label>Correo electrónico</label><div class="fake-input">{{ usuario?.email || 'No registrado' }}</div></div></div></div></div>
         </div>
 
         <div
@@ -2187,6 +2012,7 @@ import { useRouter } from "vue-router";
 import { onMounted as onMountedBody, onUnmounted } from "vue";
 import { baseURL } from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
+import CoordinadorGestion from "@/components/coordinador/CoordinadorGestion.vue";
 
 import {
   Home,
@@ -2211,6 +2037,7 @@ import {
   Menu,
   Bell,
   ChevronRight,
+  ChevronDown,
   Search,
   RefreshCw,
   AlertCircle,
@@ -2250,9 +2077,23 @@ try {
 ========================================================= */
 
 const sidebarCollapsed = ref(false);
+const menuPerfilAbierto = ref(false);
+const contenedorPerfil = ref<HTMLElement | null>(null);
+const abrirPerfil = () => { menuPerfilAbierto.value = false; irA('perfil'); };
+const cerrarMenuPerfilFuera = (evento: MouseEvent) => {
+  if (contenedorPerfil.value && !contenedorPerfil.value.contains(evento.target as Node)) menuPerfilAbierto.value = false;
+};
+onMountedBody(() => document.addEventListener('click', cerrarMenuPerfilFuera));
+onUnmounted(() => document.removeEventListener('click', cerrarMenuPerfilFuera));
 
 const seccionActual =
   ref("inicio");
+
+const seccionesGestion = [
+  'excusas-docentes', 'certificados', 'constancias', 'candidatos',
+  'eventos-electorales', 'permisos', 'resultados', 'boletin-estudiante',
+  'listados', 'informe-excusas', 'bitacora', 'cronograma'
+];
 
 /* =========================================================
    TÍTULOS
@@ -3834,87 +3675,41 @@ const informesEnRiesgo =
    BOLETÍN PDF
 ========================================================= */
 
-const abrirBoletin =
-  async (
-    matriculaId: string
-  ) => {
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    if (!token) {
-      router.push("/login");
-      return;
+const abrirBoletin = async (matriculaId: string) => {
+  const token = localStorage.getItem('token');
+  if (!token) { router.push('/login'); return; }
+  // Se abre inmediatamente tras el clic; evita el bloqueo de popups tras un fetch.
+  const ventana = window.open('', '_blank');
+  boletinCargando.value = matriculaId;
+  errorInformesPeriodicos.value = '';
+  try {
+    const respuesta = await fetch(urlApi(`/reportes/boletin/${matriculaId}/${periodoInformeSeleccionado.value}`), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!respuesta.ok) {
+      const datos = await respuesta.json().catch(() => ({}));
+      throw new Error(datos.mensaje || 'No fue posible generar el boletín.');
     }
-
-    boletinCargando.value =
-      matriculaId;
-
-    errorInformesPeriodicos.value =
-      "";
-
-    try {
-      const respuesta =
-        await fetch(
-          urlApi(`/reportes/boletin/${matriculaId}/${periodoInformeSeleccionado.value}`),
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        );
-
-      if (!respuesta.ok) {
-        const datos =
-          await respuesta
-            .json()
-            .catch(
-              () => ({})
-            );
-
-        throw new Error(
-          datos.mensaje ||
-          "No fue posible generar el boletín."
-        );
-      }
-
-      const blob =
-        await respuesta.blob();
-
-      const url =
-        URL.createObjectURL(
-          blob
-        );
-
-      window.open(
-        url,
-        "_blank"
-      );
-
-      setTimeout(
-        () => {
-          URL.revokeObjectURL(
-            url
-          );
-        },
-        60000
-      );
-
-    } catch (error: any) {
-      console.error(
-        error
-      );
-
-      errorInformesPeriodicos.value =
-        error.message ||
-        "No fue posible generar el boletín.";
-    } finally {
-      boletinCargando.value =
-        "";
+    const blob = await respuesta.blob();
+    if (!/application\/pdf/i.test(blob.type)) throw new Error('El servidor no devolvió un PDF válido.');
+    const url = URL.createObjectURL(blob);
+    if (ventana) ventana.location.href = url;
+    else {
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `boletin_${matriculaId}_periodo_${periodoInformeSeleccionado.value}.pdf`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
     }
-  };
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  } catch (error: any) {
+    if (ventana) ventana.close();
+    errorInformesPeriodicos.value = error.message || 'No fue posible generar el boletín.';
+  } finally {
+    boletinCargando.value = '';
+  }
+};
 
 /* =========================================================
    OBSERVADOR
@@ -4929,17 +4724,12 @@ const cerrarSesion = () => {
 ========================================================= */
 
 onMounted(() => {
-  if (
-    !localStorage.getItem(
-      "token"
-    )
-  ) {
-    router.push(
-      "/login"
-    );
-
+  if (!localStorage.getItem("token")) {
+    router.push("/login");
     return;
   }
+  // Los contadores del Inicio también necesitan datos reales al abrir el portal.
+  cargarSeguimiento();
 });
 </script>
 
@@ -4975,7 +4765,7 @@ body.portal-coordinador {
   width: 270px;
   height: 100vh;
   flex-shrink: 0;
-  background: #1d4ed8;
+  background: linear-gradient(180deg, #1e40af 0%, #1d4ed8 100%);
   color: white;
   display: flex;
   flex-direction: column;
@@ -9376,4 +9166,12 @@ tbody tr:hover {
 @media (max-width:800px) { .visual-table-card { overflow-x:auto; }.visual-table-head,.visual-table-row { min-width:850px; }.visual-form-grid,.result-summary,.report-metrics { grid-template-columns:1fr 1fr; }.result-row { min-width:650px; }.results-card { overflow-x:auto; }.candidate-grid,.document-options-grid,.listing-grid { grid-template-columns:1fr; }.boletin-subjects { grid-template-columns:1fr; }.calendar-day { min-height:75px; } }
 @media (max-width:500px) { .visual-form-grid,.result-summary,.report-metrics { grid-template-columns:1fr; }.fake-search,.fake-select { width:100%; min-width:0; }.election-event { grid-template-columns:55px 12px 1fr; gap:9px; }.event-meta { flex-direction:column; gap:7px; }.visual-form-actions { flex-direction:column; }.visual-form-actions button { width:100%; justify-content:center; } }
 
+
+/* Desplegable de cuenta y paleta azul idénticos a Secretaría. */
+.coord-profile-wrap { position: relative; z-index: 35; }
+.coord-profile-trigger { border: 0; border-radius: 10px; background: transparent; cursor: pointer; padding: 7px 10px; text-align: left; font: inherit; }
+.coord-profile-trigger:hover, .coord-profile-trigger:focus-visible { background: #eff6ff; }
+.coord-profile-menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 194px; background: white; border: 1px solid #dbe3ef; border-radius: 12px; box-shadow: 0 12px 28px rgba(15,23,42,.13); padding: 7px; }
+.coord-profile-menu button { border: none; background: none; width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: 8px; color: #1e40af; cursor: pointer; font-size: 13px; font-weight: 600; text-align: left; }
+.coord-profile-menu button:hover { background: #eff6ff; }
 </style>

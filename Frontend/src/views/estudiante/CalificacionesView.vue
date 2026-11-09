@@ -14,8 +14,7 @@ const misCalificaciones = ref([])
 const periodoSeleccionado = ref(1)
 
 // El número de períodos lo trae la institución (por defecto 4)
-const totalPeriodos = computed(() => auth.usuario?.institucionId?.configuracion?.numeroPeriodos || 4)
-const periodos = computed(() => Array.from({ length: totalPeriodos.value }, (_, i) => i + 1))
+const periodos = [1, 2, 3, 4]
 
 const idDe = (valor) => (typeof valor === 'object' && valor !== null ? valor._id : valor)
 
@@ -31,7 +30,8 @@ const calificacionesDelPeriodo = computed(() =>
       asignaturaId: idDe(c.asignaturaId),
       nombre: typeof c.asignaturaId === 'object' ? c.asignaturaId.nombre : 'Asignatura',
       docente: typeof c.docenteId === 'object' ? c.docenteId : null,
-      nota: notaFinal(c)
+      nota: notaFinal(c),
+      componentes: c.componentes || null
     }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre))
 )
@@ -111,12 +111,14 @@ onMounted(cargarDatos)
           <h3>Asignaturas — Periodo {{ periodoSeleccionado }}</h3>
         </div>
 
-        <table v-if="calificacionesDelPeriodo.length" class="custom-table">
+        <div v-if="calificacionesDelPeriodo.length" style="overflow-x:auto">
+        <table class="custom-table" style="min-width:960px">
           <thead>
             <tr>
               <th>Asignatura</th>
               <th>Docente</th>
-              <th>Nota</th>
+              <th>Actitudinal</th><th>Procedimental</th><th>Cognitivo</th>
+              <th>Autoevaluación</th><th>Bimestral</th><th>Definitiva</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -124,7 +126,8 @@ onMounted(cargarDatos)
             <tr v-for="c in calificacionesDelPeriodo" :key="c.asignaturaId">
               <td class="celda-fuerte">{{ c.nombre }}</td>
               <td>{{ nombreDocente(c.docente) }}</td>
-              <td>{{ c.nota ?? '—' }}</td>
+              <td v-for="campo in ['actitudinal','procedimental','cognitivo','autoevaluacion','bimestral']" :key="campo">{{ c.componentes?.[campo] ?? '—' }}</td>
+              <td><strong>{{ c.nota ?? 'Pendiente' }}</strong></td>
               <td>
                 <span class="status-badge" :class="clasificarNota(c.nota).variante">
                   {{ clasificarNota(c.nota).texto }}
@@ -133,6 +136,7 @@ onMounted(cargarDatos)
             </tr>
           </tbody>
         </table>
+        </div>
 
         <p v-else class="sin-datos">Todavía no hay calificaciones registradas para este periodo.</p>
       </div>
