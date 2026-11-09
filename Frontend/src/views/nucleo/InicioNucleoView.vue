@@ -12,9 +12,10 @@ const mostrarModalSecretaria = ref(false)
 const modoEdicion = ref(false)
 const idItemActual = ref(null)
 
-// Formularios
+// Formularios (¡Incluyendo nit requerido!)
 const formColegio = ref({
   nombre: '',
+  nit: '',
   codigoDane: '',
   adminNombre: '',
   adminEmail: '',
@@ -53,7 +54,7 @@ const cargarDatos = async () => {
 const abrirModalCrearColegio = () => {
   modoEdicion.value = false
   idItemActual.value = null
-  formColegio.value = { nombre: '', codigoDane: '', adminNombre: '', adminEmail: '', adminPassword: '', estado: 'activo' }
+  formColegio.value = { nombre: '', nit: '', codigoDane: '', adminNombre: '', adminEmail: '', adminPassword: '', estado: 'activo' }
   mostrarModalColegio.value = true
 }
 
@@ -62,6 +63,7 @@ const abrirModalEditarColegio = (colegio) => {
   idItemActual.value = colegio._id || colegio.id
   formColegio.value = {
     nombre: colegio.nombre || '',
+    nit: colegio.nit || '',
     codigoDane: colegio.codigoDane || '',
     adminNombre: colegio.adminNombre || '',
     adminEmail: colegio.adminEmail || colegio.adminInicialEmail || '',
@@ -84,7 +86,7 @@ const guardarColegio = async () => {
     cargarDatos()
   } catch (error) {
     console.error('Error al guardar institución:', error)
-    alert(error.response?.data?.mensaje || 'Error al procesar la solicitud.')
+    alert(error.response?.data?.mensaje || error.response?.data?.error || 'Error al procesar la solicitud.')
   }
 }
 
@@ -158,7 +160,7 @@ onMounted(() => {
         <div class="stat-icono stat-icono--verde"><i class="bi bi-people"></i></div>
         <div class="stat-cuerpo">
           <p class="stat-label">Secretarías Activas</p>
-          <h2 class="stat-valor">{{ secretarias.filter(s => s.estado !== 'inactivo').length }}</h2>
+          <h2 class="stat-valor">{{secretarias.filter(s => s.estado !== 'inactivo').length}}</h2>
         </div>
       </div>
     </section>
@@ -182,7 +184,8 @@ onMounted(() => {
               <span class="item-icono">🏫</span>
               <div class="item-textos">
                 <b>{{ colegio.nombre }}</b>
-                <small>NIT: {{ colegio.nit || 'N/D' }} — DANE: {{ colegio.codigoDane || 'No registrado' }} — Usuarios: {{ colegio.usuarios || 2 }}</small>
+                <small>NIT: {{ colegio.nit || 'N/D' }} — DANE: {{ colegio.codigoDane || 'No registrado' }} — Usuarios:
+                  {{ colegio.usuarios || 2 }}</small>
               </div>
             </div>
             <div class="item-acciones-right">
@@ -238,10 +241,19 @@ onMounted(() => {
             <label>Nombre del Colegio</label>
             <input v-model="formColegio.nombre" type="text" required placeholder="Ej. Colegio San José" />
           </div>
-          <div class="form-group">
-            <label>Código DANE</label>
-            <input v-model="formColegio.codigoDane" type="text" placeholder="Ej. 110010..." />
+
+          <!-- CAMPO NIT AÑADIDO -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>NIT</label>
+              <input v-model="formColegio.nit" type="text" required placeholder="Ej. 900000001-0" />
+            </div>
+            <div class="form-group">
+              <label>Código DANE</label>
+              <input v-model="formColegio.codigoDane" type="text" placeholder="Ej. 110010..." />
+            </div>
           </div>
+
           <div class="form-group">
             <label>Estado del Colegio</label>
             <select v-model="formColegio.estado" class="form-select">
@@ -266,7 +278,8 @@ onMounted(() => {
 
           <div class="modal-actions">
             <button type="button" @click="mostrarModalColegio = false" class="btn-secondary">Cancelar</button>
-            <button type="submit" class="btn-primary">{{ modoEdicion ? 'Guardar Cambios' : 'Crear Institución' }}</button>
+            <button type="submit" class="btn-primary">{{ modoEdicion ? 'Guardar Cambios' : 'Crear Institución'
+              }}</button>
           </div>
         </form>
       </div>
@@ -303,7 +316,8 @@ onMounted(() => {
             </div>
             <div class="form-group">
               <label>{{ modoEdicion ? 'Nueva Contraseña (Opcional)' : 'Contraseña' }}</label>
-              <input v-model="formSecretaria.password" type="password" :required="!modoEdicion" placeholder="••••••••" />
+              <input v-model="formSecretaria.password" type="password" :required="!modoEdicion"
+                placeholder="••••••••" />
             </div>
           </div>
 
@@ -333,11 +347,25 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.title { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0; }
-.subtitle { font-size: 0.85rem; color: #64748b; margin-top: 0.2rem; }
-.actions-row { display: flex; gap: 0.75rem; align-items: center; }
+.title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
 
-/* Tarjetas de Métricas */
+.subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.actions-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .tarjetas-resumen {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -348,7 +376,7 @@ onMounted(() => {
 .tarjeta-stat {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   border: 1px solid #e2e8f0;
   padding: 18px;
   display: flex;
@@ -367,10 +395,29 @@ onMounted(() => {
   font-size: 1.25rem;
 }
 
-.stat-icono--azul { background: #dbeafe; color: #2563eb; }
-.stat-icono--verde { background: #dcfce7; color: #16a34a; }
-.stat-label { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
-.stat-valor { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; }
+.stat-icono--azul {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.stat-icono--verde {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.stat-valor {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
 
 .estado-carga {
   background: white;
@@ -380,12 +427,19 @@ onMounted(() => {
   color: #64748b;
   border: 1px solid #e2e8f0;
   font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-/* Estilo de filas y elementos modernos */
-.grupo-menu { margin-bottom: 24px; }
-.seccion-titulo { font-size: 16px; color: #0f172a; font-weight: 700; margin-bottom: 12px; }
+.grupo-menu {
+  margin-bottom: 24px;
+}
+
+.seccion-titulo {
+  font-size: 16px;
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
 
 .lista-menu {
   display: flex;
@@ -398,7 +452,7 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -460,8 +514,16 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.badge.activo { background: #ecfdf5; color: #047857; }
-.badge.inactivo { background: #fef2f2; color: #b91c1c; }
+
+.badge.activo {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.badge.inactivo {
+  background: #fef2f2;
+  color: #b91c1c;
+}
 
 .btn-editar-link {
   background: #f8fafc;
@@ -485,33 +547,135 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background-color: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background 0.2s;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.btn-primary:hover { background-color: #1d4ed8; }
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
 
 .btn-secondary {
-  background-color: white; color: #4b5563; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 12px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: background 0.2s;
+  background-color: white;
+  color: #4b5563;
+  border: 1px solid #cbd5e1;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.btn-secondary:hover { background-color: #f8fafc; color: #1f2937; }
 
-/* Modales */
+.btn-secondary:hover {
+  background-color: #f8fafc;
+  color: #1f2937;
+}
+
 .modal-overlay {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  padding: 1rem;
 }
 
 .modal-content {
-  background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px; }
-.modal-header h2 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
-.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
 
-.form-grid { display: flex; flex-direction: column; gap: 12px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; }
-.form-group input, .form-select { border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; outline: none; background: white; }
-.form-group input:focus, .form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+.modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.form-group input,
+.form-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  outline: none;
+  background: white;
+}
+
+.form-group input:focus,
+.form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
 </style>
