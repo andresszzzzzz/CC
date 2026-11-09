@@ -17,10 +17,13 @@ watch(institucionId, cargarApoyo)
 
 const opcAnios = () => anios.value.map((a) => ({ value: a._id, label: String(a.anio) }))
 
+const JORNADAS = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche', continua: 'Continua' }
 const columnas = [
+  { key: 'anioAcademicoId', label: 'Año', format: (v) => v?.anio },
   { key: 'nombre', label: 'Grupo' },
   { key: 'grado', label: 'Grado' },
-  { key: 'jornada', label: 'Jornada' },
+  { key: 'jornada', label: 'Jornada', format: (v) => JORNADAS[v] || v },
+  { key: 'docenteDirectorId', label: 'Director de grupo', format: (v) => (v && v.nombres ? `${v.nombres} ${v.apellidos || ''}`.trim() : '') },
   { key: 'capacidad', label: 'Capacidad' },
   { key: 'estado', label: 'Estado' }
 ]
@@ -54,7 +57,7 @@ const campos = computed(() => [
 <template>
   <CrudView
     titulo="Grupos"
-    subtitulo="Grupos / cursos de cada año académico."
+    subtitulo="Grupos / cursos de cada año académico. Los docentes y estudiantes de cada grupo se asignan en «Organización de grupos»."
     :recurso="gruposApi"
     :columnas="columnas"
     :campos="campos"

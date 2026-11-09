@@ -231,7 +231,7 @@ async function guardar(f, texto, campo) {
       </div>
     </section>
 
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <p v-if="cargando" class="sec-vacio">Cargando información del año escolar…</p>
 
     <!-- PASO 1: grados -->
@@ -274,8 +274,8 @@ async function guardar(f, texto, campo) {
         <p class="sec-ayuda">Escala {{ cfg.escala.min }} a {{ cfg.escala.max }} · aprueba desde {{ cfg.escala.notaAprobatoria }}. Los cálculos usan la configuración de «Sistema de calificación».</p>
       </section>
 
-      <div v-if="errorNotas" class="sec-msg sec-msg--err">{{ errorNotas }}</div>
-      <div v-if="duplicadas" class="sec-msg sec-msg--err">Hay {{ duplicadas }} matrícula(s) repetida(s) de un mismo estudiante en este grado; se muestra una sola fila. Revísalo en Matrículas.</div>
+      <div v-if="errorNotas" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ errorNotas }}<button type="button" class="btn-close" aria-label="Cerrar" @click="errorNotas = ''"></button></div>
+      <div v-if="duplicadas" class="alert alert-warning" role="alert"><strong>¡Atención!</strong> Hay {{ duplicadas }} matrícula(s) repetida(s) de un mismo estudiante en este grado; se muestra una sola fila. Revísalo en Matrículas.</div>
 
       <section class="sec-panel">
         <p v-if="!asignaturasGrado.length" class="sec-vacio">Este grado no tiene asignaturas asignadas en «Asignación académica».</p>

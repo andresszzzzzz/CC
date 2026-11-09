@@ -1,5 +1,4 @@
 <script setup>
-import { computed, onMounted } from 'vue'
 import CrudView from './CrudView.vue'
 import { aniosApi, periodosApi } from '@/services/secretariaApiExt'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
@@ -12,16 +11,21 @@ const columnas = [
 ]
 const campos = [
   { key: 'anio', label: 'Año escolar (ej. 2027)', type: 'number', required: true, min: 2000, max: 2100 },
-  { key: 'fechaInicio', label: 'Fecha de inicio', type: 'date', required: true },
-  { key: 'fechaFin', label: 'Fecha de finalización', type: 'date', required: true },
-  { key: 'numeroPeriodos', label: '¿Cuántos periodos tendrá el año?', type: 'number', min: 1, max: 12, required: true },
+  // Las fechas son obligatorias al crear; al editar un año antiguo sin fechas no bloquean el guardado.
+  { key: 'fechaInicio', label: 'Fecha de inicio', type: 'date', requiredAlCrear: true },
+  { key: 'fechaFin', label: 'Fecha de finalización', type: 'date', requiredAlCrear: true },
+  // Solo al crear: luego los periodos se agregan, quitan o ajustan en «Periodos académicos».
+  { key: 'numeroPeriodos', label: '¿Cuántos periodos tendrá el año? (1 a 5)', type: 'number', min: 1, max: 5, required: true, soloCreacion: true },
   { key: 'esActual', label: '¿Es el año escolar actual?', type: 'select', opciones: [{ value: 'NO', label: 'No' }, { value: 'SI', label: 'Sí, usar como año actual' }] },
   { key: 'estado', label: 'Estado', type: 'select', opciones: [{ value: 'activo', label: 'Activo' }, { value: 'inactivo', label: 'Inactivo' }] }
 ]
 
-function antesDeEnviar(p) {
+function antesDeEnviar(p, editando) {
   if (p.fechaFin && p.fechaInicio && p.fechaFin <= p.fechaInicio) throw new Error('La fecha de fin debe ser posterior a la de inicio.')
-  return { estado: 'activo', esActual: 'NO', ...p, anio: Number(p.anio), numeroPeriodos: Number(p.numeroPeriodos) }
+  const datos = { estado: 'activo', esActual: 'NO', ...p, anio: Number(p.anio) }
+  if (p.numeroPeriodos !== undefined) datos.numeroPeriodos = Number(p.numeroPeriodos)
+  else delete datos.numeroPeriodos // al editar no se toca la cantidad de periodos
+  return datos
 }
 
 // Divide el año en N periodos iguales SOLO al crearlo. Después se ajustan en "Periodos académicos".
@@ -42,7 +46,7 @@ async function despuesDeGuardar(anio, fueEdicion, payload) {
       })
     }
   }
-  if (payload.esActual === 'SI' && anio._id) await aniosApi.marcarActual(anio._id) // el backend desmarca los demás
+  // «Año actual»: el backend ya lo marca al guardar (y desmarca los demás), no hace falta otra llamada.
   await cargarAnios() // el año nuevo queda disponible en matrículas, estudiantes, docentes, notas y boletines
 }
 </script>

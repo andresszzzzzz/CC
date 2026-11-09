@@ -34,8 +34,8 @@ const campos = [
     <template #header-title><h2>Información institucional</h2><p>Se escribe una sola vez y se reutiliza en todos los documentos.</p></template>
     <div v-if="cargando" class="sec-vacio">Cargando…</div>
     <template v-else>
-      <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-      <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+      <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+      <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
       <section class="sec-panel">
         <h3>Datos del colegio</h3>
         <div class="sec-grid" style="margin-top:12px">

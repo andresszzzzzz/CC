@@ -3,6 +3,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import authService from '@/services/authService'
+import { useNotificacionesStore } from '@/stores/notificaciones'
 
 const auth = useAuthStore()
 const notif = useNotificacionesStore()

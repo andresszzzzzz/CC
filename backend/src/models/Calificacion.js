@@ -58,6 +58,13 @@ const calificacionSchema = new mongoose.Schema({
     min: 1,
     max: 5
   },
+  componentes: {
+    actitudinal: { type: Number, min: 0, max: 5, default: null },
+    procedimental: { type: Number, min: 0, max: 5, default: null },
+    cognitivo: { type: Number, min: 0, max: 5, default: null },
+    autoevaluacion: { type: Number, min: 0, max: 5, default: null },
+    bimestral: { type: Number, min: 0, max: 5, default: null }
+  },
   nota: {
     type: Number,
     min: 0,

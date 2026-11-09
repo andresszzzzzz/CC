@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import DataTable from '@/components/admin/DataTable.vue'
 import FormModal from '@/components/admin/FormModal.vue'
-import ConfirmDialog from '@/components/admin/ConfirmDialog.vue'
+import { useNotificacionesStore } from '@/stores/notificaciones'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
 
 const props = defineProps({
@@ -24,6 +24,14 @@ const props = defineProps({
   mensajeEliminar: { type: String, default: '¿Seguro que quieres eliminar este registro? Esta acción no se puede deshacer.' }
 })
 const route = useRoute()
+const notif = useNotificacionesStore()
+
+// Mensaje claro a partir de la respuesta del backend (mensaje + detalle si lo hay)
+const textoError = (e, porDefecto) => {
+  const d = e.response?.data
+  if (d?.mensaje && d?.error && d.error !== d.mensaje) return `${d.mensaje}: ${d.error}`
+  return d?.mensaje || d?.error || (!e.response && e.message) || porDefecto
+}
 
 const { institucionId } = useContextoInstitucional()
 
@@ -36,26 +44,23 @@ const editando = ref(null)
 const guardando = ref(false)
 const errorForm = ref('')
 
-const confirmAbierto = ref(false)
-const aEliminar = ref(null)
 const eliminando = ref(false)
 
 // ¿Este recurso maneja activo/inactivo? Se detecta por el campo «estado» del formulario.
 const modoEstado = computed(() => props.campos.some((c) => c.key === 'estado' && Array.isArray(c.opciones) &&
   c.opciones.some((o) => o.value === 'activo') && c.opciones.some((o) => o.value === 'inactivo')))
-const accion = ref('eliminar') // 'desactivar' | 'eliminar'
-const errorAccion = ref('')
-const textosDialogo = computed(() => {
-  if (accion.value === 'desactivar') {
-    return { titulo: `Desactivar ${props.nombreItem}`, boton: 'Desactivar', procesando: 'Desactivando…',
+// Textos de la alerta de confirmación (¿Estás seguro?) según la acción
+const textosDialogo = (accion) => {
+  if (accion === 'desactivar') {
+    return { titulo: `¿Desactivar ${props.nombreItem}?`, boton: 'Sí, desactivar',
       mensaje: 'Quedará inactivo, pero sus datos y su historial se conservan. Podrás activarlo de nuevo cuando quieras. Para eliminarlo definitivamente primero debe estar desactivado.' }
   }
   if (modoEstado.value) {
-    return { titulo: `Eliminar ${props.nombreItem} definitivamente`, boton: 'Eliminar', procesando: 'Eliminando…',
+    return { titulo: `¿Eliminar ${props.nombreItem} definitivamente?`, boton: 'Sí, eliminar',
       mensaje: 'Esta acción no se puede deshacer. Si el registro ya se usa en otros módulos, el sistema no permitirá eliminarlo.' }
   }
-  return { titulo: props.tituloEliminar, mensaje: props.mensajeEliminar, boton: 'Eliminar', procesando: 'Eliminando…' }
-})
+  return { titulo: `${props.tituloEliminar}:`, mensaje: props.mensajeEliminar, boton: 'Sí, eliminar' }
+}
 
 async function cargar() {
   cargando.value = true
@@ -112,51 +117,53 @@ async function guardar(valores) {
       await props.despuesDeGuardar(guardado, fueEdicion, payload)
     }
     modalAbierto.value = false
+    if (fueEdicion) notif.exito('Los cambios se guardaron correctamente.', '¡Actualización exitosa!')
+    else notif.exito('El registro se creó correctamente.')
     await cargar()
   } catch (e) {
-    errorForm.value = e.response?.data?.mensaje || e.response?.data?.error || (!e.response && e.message) || 'No se pudo guardar el registro.'
+    // Se muestra dentro del formulario (alerta roja); el formulario queda abierto para corregir
+    errorForm.value = textoError(e, 'No se pudo guardar el registro.')
   } finally {
     guardando.value = false
   }
 }
 
-function pedirDesactivar(fila) {
-  accion.value = 'desactivar'
-  aEliminar.value = fila
-  confirmAbierto.value = true
+// Alerta de confirmación de Bootstrap («¿Estás seguro?»)
+async function pedirDesactivar(fila) {
+  const t = textosDialogo('desactivar')
+  const acepta = await notif.confirmar(t.mensaje, { titulo: t.titulo, textoSi: t.boton })
+  if (acepta) await ejecutar(fila, 'desactivar')
 }
-function pedirEliminar(fila) {
+async function pedirEliminar(fila) {
   // En tablas con activo/inactivo nunca se elimina un registro que sigue activo: primero se desactiva
   if (modoEstado.value && fila.estado !== 'inactivo') return pedirDesactivar(fila)
-  accion.value = 'eliminar'
-  aEliminar.value = fila
-  confirmAbierto.value = true
+  const t = textosDialogo('eliminar')
+  const acepta = await notif.confirmar(t.mensaje, { titulo: t.titulo, textoSi: t.boton })
+  if (acepta) await ejecutar(fila, 'eliminar')
 }
 async function activar(fila) {
-  errorAccion.value = ''
   try {
     await props.recurso.actualizar(fila._id, { estado: 'activo' })
+    notif.exito('El registro quedó activo de nuevo.', '¡Registro activado!')
     await cargar()
   } catch (e) {
-    errorAccion.value = e.response?.data?.mensaje || 'No se pudo activar el registro.'
+    notif.error(textoError(e, 'No se pudo activar el registro.'))
   }
 }
-async function confirmarEliminar() {
-  if (!aEliminar.value) return
+async function ejecutar(fila, accion) {
   eliminando.value = true
-  errorAccion.value = ''
   try {
-    if (accion.value === 'desactivar') {
-      await props.recurso.actualizar(aEliminar.value._id, { estado: 'inactivo' })
+    if (accion === 'desactivar') {
+      await props.recurso.actualizar(fila._id, { estado: 'inactivo' })
+      notif.exito('El registro quedó inactivo; su historial se conserva.', '¡Registro desactivado!')
     } else {
       // eliminarDefinitivo existe cuando el recurso viene envuelto con conDesactivacion()
-      await (props.recurso.eliminarDefinitivo || props.recurso.eliminar)(aEliminar.value._id)
+      await (props.recurso.eliminarDefinitivo || props.recurso.eliminar)(fila._id)
+      notif.exito('El registro se eliminó correctamente.', '¡Registro eliminado!')
     }
-    confirmAbierto.value = false
     await cargar()
   } catch (e) {
-    errorAccion.value = e.response?.data?.mensaje || (accion.value === 'desactivar' ? 'No se pudo desactivar el registro.' : 'No se pudo eliminar el registro.')
-    confirmAbierto.value = false
+    notif.error(textoError(e, accion === 'desactivar' ? 'No se pudo desactivar el registro.' : 'No se pudo eliminar el registro.'))
   } finally {
     eliminando.value = false
   }
@@ -180,8 +187,6 @@ const camposActivos = computed(() =>
       <h2>{{ titulo }}</h2>
       <p>{{ subtitulo }}</p>
     </template>
-
-    <div v-if="errorAccion" class="aviso-error">{{ errorAccion }}</div>
 
     <DataTable
       :columns="columnas"
@@ -209,20 +214,5 @@ const camposActivos = computed(() =>
       @guardar="guardar"
     />
 
-    <ConfirmDialog
-      v-if="!soloLectura"
-      :abierto="confirmAbierto"
-      :titulo="textosDialogo.titulo"
-      :mensaje="textosDialogo.mensaje"
-      :texto-boton="textosDialogo.boton"
-      :texto-procesando="textosDialogo.procesando"
-      :procesando="eliminando"
-      @cerrar="confirmAbierto = false"
-      @confirmar="confirmarEliminar"
-    />
   </AppLayout>
 </template>
-
-<style scoped>
-.aviso-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
-</style>

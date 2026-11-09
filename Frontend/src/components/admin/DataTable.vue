@@ -56,9 +56,12 @@ const filas = computed(() => {
     </div>
 
     <div v-if="cargando" class="tabla-estado">Cargando…</div>
-    <div v-else-if="error" class="tabla-estado tabla-error">{{ error }}</div>
-    <div v-else-if="!filas.length" class="tabla-estado">
-      {{ rows.length ? 'Ninguna coincidencia con la búsqueda.' : 'Todavía no hay registros.' }}
+    <div v-else-if="error" class="alert alert-danger m-3" role="alert">
+      <strong>¡Error!</strong> {{ error }}
+    </div>
+    <div v-else-if="!filas.length" class="alert alert-info m-3" role="alert">
+      <strong>Información:</strong>
+      {{ rows.length ? 'Ninguna coincidencia con la búsqueda.' : 'Aún no hay registros creados.' }}
     </div>
 
     <div v-else class="tabla-scroll">

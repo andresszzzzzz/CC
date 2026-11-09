@@ -6,6 +6,9 @@ import { estudiantesApi, matriculasApi } from '@/services/secretariaApiExt'
 import { useCatalogos } from '@/composables/useCatalogos'
 import { useContextoInstitucional } from '@/composables/useContextoInstitucional'
 import '@/styles/secretaria-ui.css'
+import { useNotificacionesStore } from '@/stores/notificaciones'
+
+const notif = useNotificacionesStore()
 
 const { anioActivo, cargarAnios } = useContextoInstitucional()
 const { anios, grados, grupos, jornadas, acudientes, cargar, nombrePersona, institucionId } = useCatalogos()
@@ -64,7 +67,12 @@ async function matricular() {
   guardando.value = false
 }
 async function cambiarEstado(m, estado) {
-  const motivo = estado === 'retirado' || estado === 'cancelada' ? prompt('Motivo (opcional):') || '' : ''
+  let motivo = ''
+  if (estado === 'retirado' || estado === 'cancelada') {
+    const texto = await notif.pedirTexto('Escribe el motivo (opcional).', { titulo: `Cambiar a «${estado}»:`, placeholder: 'Motivo', textoSi: 'Confirmar' })
+    if (texto === null) return // canceló
+    motivo = texto
+  }
   try { await matriculasApi.cambiarEstado(m._id, estado, motivo); m.estado = estado; msg.value = 'Estado de la matrícula actualizado.' }
   catch (e) { error.value = e.response?.data?.mensaje || 'No se pudo cambiar el estado.' }
 }
@@ -73,8 +81,8 @@ async function cambiarEstado(m, estado) {
 <template>
   <AppLayout>
     <template #header-title><h2>Matrículas</h2><p>Busca al estudiante, revisa su situación y matricúlalo en el año escolar.</p></template>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
 
     <section class="sec-panel">
       <h3>1. Buscar estudiante</h3>
@@ -101,7 +109,7 @@ async function cambiarEstado(m, estado) {
 
       <section class="sec-panel">
         <h3>2. Nueva matrícula</h3>
-        <div v-if="yaMatriculado" class="sec-msg sec-msg--info" style="margin-top:8px">Ya está matriculado en el año elegido: no se puede duplicar.</div>
+        <div v-if="yaMatriculado" class="alert alert-info" style="margin-top:8px" role="alert"><strong>Información:</strong> Ya está matriculado en el año elegido: no se puede duplicar.</div>
         <div class="sec-grid" style="margin-top:10px">
           <label class="sec-campo">Año escolar<select v-model="form.anioAcademicoId"><option v-for="a in anios" :key="a._id" :value="a._id">{{ a.anio }}{{ a._id === anioActivo?._id ? ' (actual)' : '' }}</option></select></label>
           <label class="sec-campo">Grado<select v-model="form.gradoId" @change="form.grupoId = ''"><option value="">Selecciona…</option><option v-for="g in grados.filter((x) => x.estado !== 'inactivo')" :key="g._id" :value="g._id">{{ g.nombre }}</option></select></label>

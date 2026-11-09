@@ -27,8 +27,8 @@ const desvincular = (e) => accion(() => personasApi.desvincular(persona.value._i
 <template>
   <AppLayout>
     <template #header-title><h2>Personas y roles</h2><p>Una persona, varios roles: un acudiente también puede ser docente o estudiante, sin duplicar registros.</p></template>
-    <div v-if="msg" class="sec-msg sec-msg--ok">{{ msg }}</div>
-    <div v-if="error" class="sec-msg sec-msg--err">{{ error }}</div>
+    <div v-if="msg" class="alert alert-success alert-dismissible fade show" role="alert"><strong>¡Éxito!</strong> {{ msg }}<button type="button" class="btn-close" aria-label="Cerrar" @click="msg = ''"></button></div>
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert"><strong>¡Error!</strong> {{ error }}<button type="button" class="btn-close" aria-label="Cerrar" @click="error = ''"></button></div>
     <section class="sec-panel">
       <h3>Buscar persona</h3>
       <div class="sec-fila" style="margin-top:10px">

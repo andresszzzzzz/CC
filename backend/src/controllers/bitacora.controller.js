@@ -96,7 +96,11 @@ const obtenerRegistroPorId = async (req, res) => {
 // Crear registro
 const crearRegistro = async (req, res) => {
   try {
-    const registro = new Bitacora(req.body);
+    const registro = new Bitacora({
+      accion: req.body.accion, coleccion: req.body.coleccion, detalle: req.body.detalle,
+      registroId: req.body.registroId, institucionId: req.usuario.institucionId,
+      usuarioId: req.usuario.id, metodo: req.method, ruta: req.originalUrl
+    });
     await registro.save();
 
     res.status(201).json({

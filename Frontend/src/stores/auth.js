@@ -64,12 +64,13 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    cerrarSesion() {
-      authService.logout().catch(() => {})
-      this.token = null
-      this.usuario = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('usuario')
-    }
+   cerrarSesion() {
+  this.token = null
+  this.usuario = null
+
+  localStorage.removeItem('token')
+  localStorage.removeItem('usuario')
+  localStorage.removeItem('tipoPerfil')
+}
   }
 })

@@ -11,7 +11,8 @@ defineEmits(['cerrar', 'confirmar'])
 </script>
 
 <template>
-  <div v-if="abierto" class="conf-fondo" @click.self="$emit('cerrar')">
+  <!-- Persistente: solo se cierra con los botones -->
+  <div v-if="abierto" class="conf-fondo">
     <div class="conf-caja">
       <h3>{{ titulo }}</h3>
       <p>{{ mensaje }}</p>

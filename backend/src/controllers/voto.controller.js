@@ -1,11 +1,13 @@
 const Voto = require('../models/Voto');
 const EventoElectoral = require('../models/EventoElectoral');
 const Matricula = require('../models/Matricula');
+const { filtroTenant } = require('../utils/tenant');
 
 // Obtener todos los votos
 const obtenerVotos = async (req, res) => {
   try {
-    const votos = await Voto.find()
+    const eventosId = await EventoElectoral.distinct('_id', filtroTenant(req));
+    const votos = await Voto.find({ eventoId: { $in: eventosId } })
       .populate('eventoId')
       .populate('estudianteId');
 
@@ -21,6 +23,9 @@ const obtenerVotoPorId = async (req, res) => {
     const voto = await Voto.findById(req.params.id)
       .populate('eventoId')
       .populate('estudianteId');
+    if (voto && !(await EventoElectoral.exists({ _id: voto.eventoId?._id, ...filtroTenant(req) }))) {
+      return res.status(404).json({ mensaje: 'Voto no encontrado' });
+    }
 
     if (!voto) {
       return res.status(404).json({ mensaje: 'Voto no encontrado' });
@@ -42,13 +47,15 @@ const obtenerVotoPorId = async (req, res) => {
 //  - un estudiante no puede votar dos veces por el mismo cargo en el mismo evento
 const crearVoto = async (req, res) => {
   try {
-    const { eventoId, estudianteId, candidatoId, cargo } = req.body;
+    const { eventoId, candidatoId, cargo } = req.body;
+    const estudianteId = req.usuario.id;
 
-    if (!eventoId || !estudianteId || !candidatoId || !cargo) {
-      return res.status(400).json({ mensaje: 'Se requiere eventoId, estudianteId, candidatoId y cargo' });
+    if (req.usuario.tipoPerfil !== 'estudiante') return res.status(403).json({ mensaje: 'Solo un estudiante autenticado puede votar.' });
+    if (!eventoId || !candidatoId || !cargo) {
+      return res.status(400).json({ mensaje: 'Se requiere eventoId, candidatoId y cargo' });
     }
 
-    const evento = await EventoElectoral.findById(eventoId);
+    const evento = await EventoElectoral.findOne({ _id: eventoId, ...filtroTenant(req) });
     if (!evento) {
       return res.status(404).json({ mensaje: 'Evento electoral no encontrado' });
     }
@@ -66,14 +73,11 @@ const crearVoto = async (req, res) => {
       return res.status(400).json({ mensaje: 'Ese candidato no existe o no aplica para el cargo indicado' });
     }
 
-    if (evento.gruposHabilitados.length > 0) {
-      const matricula = await Matricula.findOne({
-        institucionId: evento.institucionId,
-        estudianteId,
-        estado: 'activa'
-      });
+    const matricula = await Matricula.findOne({ institucionId: evento.institucionId, estudianteId, estado: 'activa' });
+    if (!matricula) return res.status(403).json({ mensaje: 'Necesitas una matrícula activa en esta institución para votar.' });
 
-      const grupoHabilitado = matricula && evento.gruposHabilitados.some((g) => String(g) === String(matricula.grupoId));
+    if (evento.gruposHabilitados.length > 0) {
+      const grupoHabilitado = evento.gruposHabilitados.some((g) => String(g) === String(matricula.grupoId));
       if (!grupoHabilitado) {
         return res.status(403).json({ mensaje: 'El grupo de este estudiante no está habilitado para votar en este evento' });
       }
@@ -98,9 +102,13 @@ const crearVoto = async (req, res) => {
 // abstención (comparando contra los estudiantes elegibles para votar).
 const obtenerResultados = async (req, res) => {
   try {
-    const evento = await EventoElectoral.findById(req.params.eventoId);
+    const evento = await EventoElectoral.findOne({ _id: req.params.eventoId, ...filtroTenant(req) });
     if (!evento) {
       return res.status(404).json({ mensaje: 'Evento electoral no encontrado' });
+    }
+
+    if (!evento.resultadosPublicos && !['admin', 'rector', 'coordinador'].includes(req.usuario.tipoPerfil)) {
+      return res.status(403).json({ mensaje: 'Los resultados aún no son públicos.' });
     }
 
     // Estudiantes elegibles: los de los grupos habilitados, o todos los
@@ -152,20 +160,14 @@ const obtenerResultados = async (req, res) => {
 // Actualizar un voto
 const actualizarVoto = async (req, res) => {
   try {
-    const votoActualizado = await Voto.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    if (!votoActualizado) {
+    const actual = await Voto.findById(req.params.id);
+    if (!actual || !(await EventoElectoral.exists({ _id: actual.eventoId, ...filtroTenant(req) }))) {
       return res.status(404).json({ mensaje: 'Voto no encontrado' });
     }
+    // Un voto ya emitido no se puede redirigir a otro estudiante/evento/candidato.
+    return res.status(409).json({ mensaje: 'Los votos registrados son inmutables. No se pueden editar.' });
 
-    res.json(votoActualizado);
+
   } catch (error) {
     res.status(400).json({ mensaje: error.message });
   }
@@ -174,13 +176,13 @@ const actualizarVoto = async (req, res) => {
 // Eliminar un voto
 const eliminarVoto = async (req, res) => {
   try {
-    const votoEliminado = await Voto.findByIdAndDelete(req.params.id);
-
-    if (!votoEliminado) {
+    const voto = await Voto.findById(req.params.id);
+    if (!voto || !(await EventoElectoral.exists({ _id: voto.eventoId, ...filtroTenant(req) }))) {
       return res.status(404).json({ mensaje: 'Voto no encontrado' });
     }
+    return res.status(409).json({ mensaje: 'No es posible eliminar un voto emitido.' });
 
-    res.json({ mensaje: 'Voto eliminado correctamente' });
+
   } catch (error) {
     res.status(500).json({ mensaje: error.message });
   }

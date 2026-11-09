@@ -1,6 +1,9 @@
 const Calificacion = require('../models/Calificacion');
 const AnioAcademico = require('../models/AnioAcademico');
 const Institucion = require('../models/Institucion');
+const Matricula = require('../models/Matricula');
+const CargaAcademica = require('../models/CargaAcademica');
+const { normalizarComponentes, calcularNotaComponentes } = require('../utils/componentesCalificacion');
 const { ESTADOS_PERIODO } = require('../config/constants');
 
 // Busca el subdocumento de período dentro del año académico. Devuelve null
@@ -35,142 +38,178 @@ const validarEstadoPeriodo = async (anioAcademicoId, numeroPeriodo, accion = 'es
   return { ok: true, anioAcademico, periodo };
 };
 
-// Obtener todas las calificaciones
+// El servidor (y no el formulario) comprueba la materia asignada, el grupo,
+// el año y la institución antes de permitir escribir una calificación.
+const rolesGestion = ['admin', 'rector', 'coordinador', 'secretaria'];
+const idIgual = (a, b) => String(a || '') === String(b || '');
+const esGestion = (req) => rolesGestion.includes(req.usuario?.tipoPerfil);
+
+const puedeEditarAsignatura = async (req, calificacion) => {
+  if (!req.usuario?.institucionId || !idIgual(calificacion.institucionId, req.usuario.institucionId)) return false;
+  if (esGestion(req)) return true;
+  if (req.usuario.tipoPerfil !== 'docente') return false;
+  return !!(await CargaAcademica.exists({
+    institucionId: req.usuario.institucionId,
+    docenteId: req.usuario.id,
+    anioAcademicoId: calificacion.anioAcademicoId,
+    grupoId: calificacion.grupoId,
+    asignaturaId: calificacion.asignaturaId,
+    estado: 'activo', puedeCalificar: true
+  }));
+};
+
+const puedeLeerCalificacion = async (req, calificacion) => {
+  if (!req.usuario?.institucionId || !idIgual(calificacion.institucionId, req.usuario.institucionId)) return false;
+  if (esGestion(req)) return true;
+  if (req.usuario.tipoPerfil === 'estudiante') return idIgual(calificacion.estudianteId, req.usuario.id);
+  if (req.usuario.tipoPerfil === 'acudiente') {
+    return !!(await Matricula.exists({ institucionId: req.usuario.institucionId,
+      acudienteId: req.usuario.id, estudianteId: calificacion.estudianteId }));
+  }
+  if (req.usuario.tipoPerfil === 'docente') {
+    return !!(await CargaAcademica.exists({ institucionId: req.usuario.institucionId,
+      docenteId: req.usuario.id, anioAcademicoId: calificacion.anioAcademicoId,
+      grupoId: calificacion.grupoId, asignaturaId: calificacion.asignaturaId,
+      estado: 'activo' }));
+  }
+  return false;
+};
+
+const validarAlcance = async (req, datos) => {
+  if (!await puedeEditarAsignatura(req, datos)) return 'Solo puedes calificar tus materias y grupos asignados.';
+  const [grupo, anio, matricula] = await Promise.all([
+    require('../models/Grupo').findOne({ _id: datos.grupoId, institucionId: req.usuario.institucionId }),
+    AnioAcademico.findOne({ _id: datos.anioAcademicoId, institucionId: req.usuario.institucionId }),
+    Matricula.exists({ institucionId: req.usuario.institucionId, anioAcademicoId: datos.anioAcademicoId,
+      grupoId: datos.grupoId, estudianteId: datos.estudianteId, estado: 'activa' })
+  ]);
+  if (!grupo || !anio || !idIgual(grupo.anioAcademicoId, anio._id)) return 'El grupo y el año académico no corresponden.';
+  if (!matricula) return 'El estudiante no tiene una matrícula activa en ese grupo y año.';
+  return null;
+};
+
+const prepararEvaluacion = (datos, anterior = null) => {
+  if (datos.componentes === undefined) {
+    if (datos.nota !== undefined && datos.nota !== null && (!Number.isFinite(Number(datos.nota)) || Number(datos.nota) < 0 || Number(datos.nota) > 5)) {
+      throw new Error('La nota debe estar entre 0 y 5.');
+    }
+    return { ...(datos.nota !== undefined ? { nota: datos.nota } : {}) };
+  }
+  const base = anterior?.componentes?.toObject?.() || anterior?.componentes || {};
+  const componentes = normalizarComponentes({ ...base, ...datos.componentes });
+  const notaCompleta = calcularNotaComponentes(componentes);
+  // Si se está migrando una nota antigua, se conserva su definitiva anterior
+  // mientras se completan los cinco componentes; nunca se pierde al guardar
+  // un borrador de evaluación.
+  return { componentes, nota: notaCompleta ?? anterior?.nota ?? null };
+};
+
+// GET /api/calificaciones: cada actor solo puede ver las notas que le competen.
 const obtenerCalificaciones = async (req, res) => {
   try {
     const { estudianteId, asignaturaId, grupoId, anioAcademicoId, periodo } = req.query;
-    const filtro = {};
+    if (!req.usuario?.institucionId) return res.status(403).json({ mensaje: 'No hay institución asociada.' });
+    const filtro = { institucionId: req.usuario.institucionId };
     if (estudianteId) filtro.estudianteId = estudianteId;
     if (asignaturaId) filtro.asignaturaId = asignaturaId;
     if (grupoId) filtro.grupoId = grupoId;
     if (anioAcademicoId) filtro.anioAcademicoId = anioAcademicoId;
     if (periodo) filtro.periodo = Number(periodo);
-
+    if (req.usuario.tipoPerfil === 'estudiante') filtro.estudianteId = req.usuario.id;
+    if (req.usuario.tipoPerfil === 'docente') {
+      const cargas = await CargaAcademica.find({ institucionId: req.usuario.institucionId,
+        docenteId: req.usuario.id, estado: 'activo' }).select('anioAcademicoId grupoId asignaturaId').lean();
+      // Se filtra por la pareja completa: el docente no puede leer una materia
+      // en un grupo diferente solo porque enseña esa materia en otro grupo.
+      if (!cargas.length) return res.json([]);
+      filtro.$or = cargas.map((c) => ({ anioAcademicoId: c.anioAcademicoId,
+        grupoId: c.grupoId, asignaturaId: c.asignaturaId }));
+    } else if (req.usuario.tipoPerfil === 'acudiente') {
+      const matriculas = await Matricula.find({ institucionId: req.usuario.institucionId,
+        acudienteId: req.usuario.id }).select('estudianteId').lean();
+      const ids = matriculas.map((m) => m.estudianteId);
+      filtro.estudianteId = estudianteId ? { $in: ids.filter((id) => idIgual(id, estudianteId)) } : { $in: ids };
+    } else if (!esGestion(req) && req.usuario.tipoPerfil !== 'estudiante') {
+      return res.status(403).json({ mensaje: 'No tienes permisos para consultar calificaciones.' });
+    }
     const calificaciones = await Calificacion.find(filtro)
-      .populate('institucionId')
-      .populate('anioAcademicoId')
-      .populate('estudianteId')
-      .populate('asignaturaId')
-      .populate('grupoId')
-      .populate('docenteId')
-      .populate('indicadores.indicadorId')
-      .populate('actividades.actividadId');
-
+      .populate('anioAcademicoId', 'anio')
+      .populate('estudianteId', 'nombres apellidos')
+      .populate('asignaturaId', 'nombre')
+      .populate('grupoId', 'nombre')
+      .populate('docenteId', 'nombres apellidos');
     res.json(calificaciones);
   } catch (error) {
-    res.status(500).json({
-      mensaje: error.message
-    });
+    res.status(500).json({ mensaje: error.message });
   }
 };
 
-// Obtener una calificación por ID
 const obtenerCalificacionPorId = async (req, res) => {
   try {
-    const calificacion = await Calificacion.findById(req.params.id)
-      .populate('institucionId')
-      .populate('anioAcademicoId')
-      .populate('estudianteId')
-      .populate('asignaturaId')
-      .populate('grupoId')
-      .populate('docenteId')
-      .populate('indicadores.indicadorId')
-      .populate('actividades.actividadId');
-
-    if (!calificacion) {
-      return res.status(404).json({
-        mensaje: 'Calificación no encontrada'
-      });
-    }
-
+    const calificacion = await Calificacion.findById(req.params.id);
+    if (!calificacion) return res.status(404).json({ mensaje: 'Calificación no encontrada' });
+    if (!await puedeLeerCalificacion(req, calificacion)) return res.status(403).json({ mensaje: 'Sin permiso para consultar esta nota.' });
+    await calificacion.populate('estudianteId asignaturaId grupoId docenteId');
     res.json(calificacion);
-  } catch (error) {
-    res.status(500).json({
-      mensaje: error.message
-    });
-  }
+  } catch (error) { res.status(500).json({ mensaje: error.message }); }
 };
 
-// Crear calificación
 const crearCalificacion = async (req, res) => {
   try {
-    const { anioAcademicoId, periodo } = req.body;
-
-    const validacion = await validarEstadoPeriodo(anioAcademicoId, periodo, 'escribir');
-    if (!validacion.ok) {
-      return res.status(400).json({ mensaje: validacion.mensaje });
+    const { anioAcademicoId, grupoId, asignaturaId, estudianteId } = req.body;
+    const periodo = Number(req.body.periodo);
+    if (!Number.isInteger(periodo) || periodo < 1 || periodo > 4) {
+      return res.status(400).json({ mensaje: 'El período debe ser uno de los cuatro períodos académicos.' });
     }
-
-    const nuevaCalificacion = new Calificacion(req.body);
-    const guardada = await nuevaCalificacion.save();
-
+    const datos = { anioAcademicoId, grupoId, asignaturaId, estudianteId,
+      institucionId: req.usuario.institucionId, periodo };
+    const problema = await validarAlcance(req, datos);
+    if (problema) return res.status(403).json({ mensaje: problema });
+    const validacion = await validarEstadoPeriodo(anioAcademicoId, periodo, 'escribir');
+    if (!validacion.ok) return res.status(400).json({ mensaje: validacion.mensaje });
+    if (req.usuario.tipoPerfil === 'docente' && req.body.componentes === undefined) {
+      return res.status(400).json({ mensaje: 'Debes registrar los componentes de evaluación.' });
+    }
+    const evaluacion = prepararEvaluacion(req.body);
+    const nueva = new Calificacion({ ...datos, ...evaluacion, docenteId: req.usuario.id,
+      observacion: req.body.observacion || '' });
+    const guardada = await nueva.save();
     res.status(201).json(guardada);
   } catch (error) {
-    res.status(400).json({
-      mensaje: error.message
-    });
+    res.status(error.code === 11000 ? 409 : 400).json({ mensaje: error.code === 11000 ? 'Ya existe una nota para este estudiante, asignatura y período.' : error.message });
   }
 };
 
-// Actualizar calificación
 const actualizarCalificacion = async (req, res) => {
   try {
     const existente = await Calificacion.findById(req.params.id);
-    if (!existente) {
-      return res.status(404).json({ mensaje: 'Calificación no encontrada' });
-    }
-
-    // El período se valida siempre contra el registro existente, no contra
-    // lo que venga en el body — así nadie puede "mover" una nota a otro
-    // período para esquivar el bloqueo.
+    if (!existente) return res.status(404).json({ mensaje: 'Calificación no encontrada' });
+    if (!await puedeEditarAsignatura(req, existente)) return res.status(403).json({ mensaje: 'No tienes esa asignatura y grupo asignados.' });
     const validacion = await validarEstadoPeriodo(existente.anioAcademicoId, existente.periodo, 'escribir');
-    if (!validacion.ok) {
-      return res.status(400).json({ mensaje: validacion.mensaje });
+    if (!validacion.ok) return res.status(400).json({ mensaje: validacion.mensaje });
+    if (req.usuario.tipoPerfil === 'docente' && req.body.componentes === undefined) {
+      return res.status(400).json({ mensaje: 'Solo puedes editar los componentes de evaluación.' });
     }
-
-    // No se permite cambiar el período ni el año académico desde aquí.
-    const { periodo, anioAcademicoId, ...camposPermitidos } = req.body;
-
-    const actualizada = await Calificacion.findByIdAndUpdate(
-      req.params.id,
-      camposPermitidos,
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    res.json(actualizada);
-  } catch (error) {
-    res.status(400).json({
-      mensaje: error.message
-    });
-  }
+    const evaluacion = prepararEvaluacion(req.body, existente);
+    Object.assign(existente, evaluacion);
+    if (req.body.observacion !== undefined) existente.observacion = req.body.observacion;
+    existente.docenteId = req.usuario.id;
+    existente.fechaCalificacion = new Date();
+    await existente.save();
+    res.json(existente);
+  } catch (error) { res.status(400).json({ mensaje: error.message }); }
 };
 
-// Eliminar calificación
 const eliminarCalificacion = async (req, res) => {
   try {
     const existente = await Calificacion.findById(req.params.id);
-    if (!existente) {
-      return res.status(404).json({ mensaje: 'Calificación no encontrada' });
-    }
-
+    if (!existente) return res.status(404).json({ mensaje: 'Calificación no encontrada' });
+    if (!await puedeEditarAsignatura(req, existente)) return res.status(403).json({ mensaje: 'Sin permiso para eliminar esta nota.' });
     const validacion = await validarEstadoPeriodo(existente.anioAcademicoId, existente.periodo, 'escribir');
-    if (!validacion.ok) {
-      return res.status(400).json({ mensaje: validacion.mensaje });
-    }
-
-    await Calificacion.findByIdAndDelete(req.params.id);
-
-    res.json({
-      mensaje: 'Calificación eliminada correctamente'
-    });
-  } catch (error) {
-    res.status(500).json({
-      mensaje: error.message
-    });
-  }
+    if (!validacion.ok) return res.status(400).json({ mensaje: validacion.mensaje });
+    await existente.deleteOne();
+    res.json({ mensaje: 'Calificación eliminada correctamente' });
+  } catch (error) { res.status(500).json({ mensaje: error.message }); }
 };
 
 // PUT /api/calificaciones/:id/recuperacion
@@ -192,6 +231,8 @@ const registrarRecuperacion = async (req, res) => {
     if (!calificacion) {
       return res.status(404).json({ mensaje: 'Calificación no encontrada' });
     }
+
+    if (!await puedeEditarAsignatura(req, calificacion)) return res.status(403).json({ mensaje: 'Sin permiso para recuperar esta nota.' });
 
     const validacion = await validarEstadoPeriodo(calificacion.anioAcademicoId, calificacion.periodo, 'recuperar');
     if (!validacion.ok) {
@@ -241,6 +282,8 @@ const registrarHabilitacion = async (req, res) => {
     if (!calificacion) {
       return res.status(404).json({ mensaje: 'Calificación no encontrada' });
     }
+
+    if (!await puedeEditarAsignatura(req, calificacion)) return res.status(403).json({ mensaje: 'Sin permiso para habilitar esta nota.' });
 
     const anioAcademico = await AnioAcademico.findById(calificacion.anioAcademicoId);
     if (!anioAcademico) {

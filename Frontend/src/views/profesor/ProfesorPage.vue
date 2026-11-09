@@ -128,19 +128,19 @@
           </h1>
         </div>
 
-        <div class="profile-mini">
-          <div class="profile-avatar">
-            {{ inicialesProfesor }}
-          </div>
-
-          <div class="profile-info">
-            <strong>
-              {{ nombreProfesor }}
-            </strong>
-
-            <span>
-              {{ correoProfesor }}
-            </span>
+        <div ref="contenedorPerfil" class="profile-dropdown-wrap">
+          <button type="button" class="profile-mini profile-trigger"
+            :aria-expanded="menuPerfilAbierto" aria-haspopup="true" @click="menuPerfilAbierto = !menuPerfilAbierto">
+            <div class="profile-avatar">{{ inicialesProfesor }}</div>
+            <div class="profile-info">
+              <strong>{{ nombreProfesor }}</strong>
+              <span>{{ correoProfesor }}</span>
+            </div>
+            <ChevronDown :size="17" />
+          </button>
+          <div v-if="menuPerfilAbierto" class="profile-dropdown" role="menu">
+            <button type="button" role="menuitem" @click="abrirPerfil"><User :size="17" /> Mi perfil</button>
+            <button type="button" role="menuitem" @click="cerrarSesion"><LogOut :size="17" /> Cerrar sesión</button>
           </div>
         </div>
       </header>
@@ -474,67 +474,70 @@
       <!-- ================= CALIFICACIONES ================= -->
       <section v-else-if="seccionActiva === 'calificaciones'" class="content-section">
         <div class="section-title">
-          <div>
-            <h2>Calificaciones</h2>
-            <p>Consulta y registra las notas de tus estudiantes.</p>
-          </div>
-          <button type="button" class="primary-button" @click="guardarCalificaciones" :disabled="guardandoCalificaciones">
-            {{ guardandoCalificaciones ? "Guardando..." : "Guardar calificaciones" }}
+          <div><h2>Calificaciones</h2><p>Evalúa únicamente los grupos y asignaturas que tienes asignados.</p></div>
+          <button type="button" class="primary-button" @click="guardarCalificaciones"
+            :disabled="guardandoCalificaciones || cargandoCargas || !cargaCalificacionesSeleccionada">
+            {{ guardandoCalificaciones ? 'Guardando…' : 'Guardar calificaciones' }}
           </button>
         </div>
         <div class="panel">
+          <p class="grade-instructions">Cuatro períodos académicos · Actitudinal, procedimental, cognitivo, autoevaluación y bimestral valen <strong>20 % cada uno</strong>.
+            La definitiva se calcula cuando estén completas las cinco notas y se publica al estudiante al guardar.</p>
+          <p v-if="cargandoCargas" class="grade-info">Consultando tu asignación académica…</p>
+          <p v-else-if="errorCargas" class="grade-error">{{ errorCargas }}</p>
+          <p v-else-if="!gruposCalificables.length" class="grade-info">No tienes grupos habilitados para calificar. Solicita a Secretaría que registre tu carga académica.</p>
           <div class="filters">
-            <div class="field">
-              <label>Grupo</label>
-              <select v-model="grupoCalificacionesId" @change="cargarEstudiantesParaCalificar">
-                <option value="">Selecciona un grupo</option>
-                <option v-for="grupo in grupos" :key="grupo._id || grupo.id" :value="String(grupo._id || grupo.id)">
-                  {{ nombreElemento(grupo) }}
-                </option>
+            <div class="field"><label>Mi grupo</label>
+              <select v-model="grupoCalificacionesId" :disabled="cargandoCargas" @change="cambiarGrupoCalificaciones">
+                <option value="">Selecciona un grupo asignado</option>
+                <option v-for="grupo in gruposCalificables" :key="idDe(grupo)" :value="idDe(grupo)">{{ nombreElemento(grupo) }}</option>
               </select>
             </div>
-            <div class="field">
-              <label>Asignatura</label>
-              <select v-model="asignaturaCalificacionesId" @change="cargarEstudiantesParaCalificar">
-                <option value="">Selecciona una asignatura</option>
-                <option v-for="asignatura in asignaturas" :key="asignatura._id || asignatura.id" :value="String(asignatura._id || asignatura.id)">
-                  {{ nombreElemento(asignatura) }}
-                </option>
+            <div class="field"><label>Mi asignatura</label>
+              <select v-model="asignaturaCalificacionesId" :disabled="!grupoCalificacionesId" @change="cargarEstudiantesParaCalificar">
+                <option value="">Selecciona tu asignatura</option>
+                <option v-for="asignatura in asignaturasCalificables" :key="idDe(asignatura)" :value="idDe(asignatura)">{{ nombreElemento(asignatura) }}</option>
               </select>
             </div>
-            <div class="field">
-              <label>Periodo</label>
+            <div class="field"><label>Período</label>
               <select v-model.number="periodoCalificaciones" @change="cargarEstudiantesParaCalificar">
-                <option :value="1">Periodo 1</option><option :value="2">Periodo 2</option>
-                <option :value="3">Periodo 3</option><option :value="4">Periodo 4</option>
+                <option v-for="periodo in [1,2,3,4]" :key="periodo" :value="periodo">Período {{ periodo }}</option>
               </select>
             </div>
-            <div class="field">
-              <label>Estudiante a calificar</label>
-              <select v-model="estudianteCalificacionId">
+            <div class="field"><label>Estudiante</label>
+              <select v-model="estudianteCalificacionId" :disabled="!estudiantesCalificaciones.length">
                 <option value="">Todos los estudiantes</option>
-                <option v-for="estudiante in estudiantesCalificaciones" :key="estudiante.id" :value="estudiante.id">
-                  {{ estudiante.nombre }}
-                </option>
+                <option v-for="estudiante in estudiantesCalificaciones" :key="estudiante.id" :value="estudiante.id">{{ estudiante.nombre }}</option>
               </select>
             </div>
           </div>
-          <div v-if="estudiantesCalificacionesVisibles.length" class="data-table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Estudiante</th><th>Nota (0–5)</th><th>Observación</th></tr></thead>
-              <tbody>
-                <tr v-for="estudiante in estudiantesCalificacionesVisibles" :key="estudiante.id">
-                  <td>{{ estudiante.nombre }}</td>
-                  <td><input v-model.number="estudiante.nota" type="number" min="0" max="5" step="0.1" class="table-input" /></td>
-                  <td><input v-model="estudiante.observacion" type="text" class="table-input" placeholder="Comentario opcional" /></td>
-                </tr>
-              </tbody>
+          <div v-if="cargandoEstudiantesCalificaciones" class="grade-info">Cargando estudiantes matriculados y notas existentes…</div>
+          <div v-else-if="estudiantesCalificacionesVisibles.length" class="data-table-wrap grade-table-wrap">
+            <table class="data-table grade-table">
+              <thead><tr>
+                <th>Estudiante</th><th>Actitudinal<br /><small>20 %</small></th><th>Procedimental<br /><small>20 %</small></th>
+                <th>Cognitivo<br /><small>20 %</small></th><th>Autoevaluación<br /><small>20 %</small></th><th>Bimestral<br /><small>20 %</small></th>
+                <th>Definitiva</th><th>Observación</th>
+              </tr></thead>
+              <tbody><tr v-for="estudiante in estudiantesCalificacionesVisibles" :key="estudiante.id">
+                <td class="grade-student">{{ estudiante.nombre }}</td>
+                <td v-for="componente in camposCalificacion" :key="componente">
+                  <input v-model.number="estudiante.componentes[componente]" type="number" min="0" max="5" step="0.01"
+                    class="table-input grade-number" :aria-label="`${componente} de ${estudiante.nombre}`" placeholder="—" />
+                </td>
+                <td class="grade-total">
+                  <strong v-if="definitivaComponentes(estudiante.componentes) !== null">{{ definitivaComponentes(estudiante.componentes).toFixed(2) }}</strong>
+                  <span v-else-if="estudiante.notaAnterior !== null" :title="'Nota anterior sin desglosar: ' + estudiante.notaAnterior">Anterior: {{ estudiante.notaAnterior }}</span>
+                  <span v-else title="Completa las cinco notas">Pendiente</span>
+                </td>
+                <td><input v-model="estudiante.observacion" type="text" class="table-input grade-observation" placeholder="Opcional" /></td>
+              </tr></tbody>
             </table>
           </div>
-          <div v-else class="empty-state large">
+          <div v-else-if="!cargandoCargas" class="empty-state large">
             <div class="empty-icon"><ClipboardPenLine :size="42" /></div>
-            <h3>{{ grupoCalificacionesId ? "No hay estudiantes para calificar" : "Selecciona un grupo" }}</h3>
-            <p>{{ grupoCalificacionesId ? "No se encontraron estudiantes matriculados en este grupo. Verifica que el grupo tenga estudiantes asignados." : "Elige un grupo para cargar únicamente los estudiantes matriculados y registrar sus calificaciones." }}</p>
+            <h3>{{ !grupoCalificacionesId || !asignaturaCalificacionesId ? 'Selecciona tu grupo y asignatura' : 'No hay estudiantes matriculados' }}</h3>
+            <p>Solo se muestran estudiantes con matrícula activa para tu grupo y año académico.</p>
           </div>
         </div>
       </section>
@@ -1358,8 +1361,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import api from "@/services/api";
 
 import {
   House,
@@ -1376,9 +1381,11 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "@lucide/vue";
 
 const router = useRouter();
+const auth = useAuthStore();
 
 /* =========================================================
    NAVEGACIÓN
@@ -1386,6 +1393,16 @@ const router = useRouter();
 
 const seccionActiva = ref("inicio");
 const sidebarOculta = ref(false);
+// Perfil en el menú desplegable del nombre (sin duplicar la pestaña lateral).
+const menuPerfilAbierto = ref(false);
+const contenedorPerfil = ref<HTMLElement | null>(null);
+const abrirPerfil = () => { menuPerfilAbierto.value = false; seccionActiva.value = "perfil"; };
+const cerrarMenuPerfilFuera = (evento: MouseEvent) => {
+  if (contenedorPerfil.value && !contenedorPerfil.value.contains(evento.target as Node)) menuPerfilAbierto.value = false;
+};
+onMounted(() => document.addEventListener("click", cerrarMenuPerfilFuera));
+onUnmounted(() => document.removeEventListener("click", cerrarMenuPerfilFuera));
+
 
 const menuItems = [
   {
@@ -1428,11 +1445,7 @@ const menuItems = [
     label: "Horario",
     icon: CalendarDays,
   },
-  {
-    id: "perfil",
-    label: "Perfil",
-    icon: User,
-  },
+
 ];
 
 /* =========================================================
@@ -1490,13 +1503,14 @@ const usuario = usuarioGuardado
   : null;
 
 const nombreProfesor = computed(() => {
-  if (!usuario) {
+  const datos = auth.usuario || usuario;
+  if (!datos) {
     return "Profesor";
   }
 
   const nombreCompleto = [
-    usuario.nombres,
-    usuario.apellidos,
+    datos.nombres,
+    datos.apellidos,
   ]
     .filter(Boolean)
     .join(" ")
@@ -1504,8 +1518,8 @@ const nombreProfesor = computed(() => {
 
   return (
     nombreCompleto ||
-    usuario.nombre ||
-    usuario.usuario ||
+    datos.nombre ||
+    datos.usuario ||
     "Profesor"
   );
 });
@@ -1514,12 +1528,7 @@ const primerNombre = computed(() => {
   return nombreProfesor.value.split(" ")[0];
 });
 
-const correoProfesor = computed(() => {
-  return (
-    usuario?.email ||
-    "No registrado"
-  );
-});
+const correoProfesor = computed(() => auth.usuario?.email || usuario?.email || 'No registrado');
 
 const inicialesProfesor = computed(() => {
   const palabras =
@@ -2381,11 +2390,69 @@ const asignaturaCalificacionesId = ref("");
 const periodoCalificaciones = ref(1);
 const estudiantesCalificaciones = ref<any[]>([]);
 const estudianteCalificacionId = ref("");
-const estudiantesCalificacionesVisibles = computed(() => {
-  if (!estudianteCalificacionId.value) return estudiantesCalificaciones.value;
-  return estudiantesCalificaciones.value.filter((e: any) => String(e.id) === String(estudianteCalificacionId.value));
-});
 const guardandoCalificaciones = ref(false);
+const cargandoEstudiantesCalificaciones = ref(false);
+const cargasAcademicas = ref<any[]>([]);
+const cargandoCargas = ref(true);
+const errorCargas = ref("");
+const camposCalificacion = ['actitudinal', 'procedimental', 'cognitivo', 'autoevaluacion', 'bimestral'] as const;
+const componentesVacios = () => ({ actitudinal: null, procedimental: null, cognitivo: null, autoevaluacion: null, bimestral: null });
+const definitivaComponentes = (componentes: any): number | null => {
+  if (!componentes || camposCalificacion.some((c) => componentes[c] === null || componentes[c] === undefined || componentes[c] === '' || !Number.isFinite(Number(componentes[c])))) return null;
+  const valores = camposCalificacion.map((c) => Number(componentes[c]));
+  if (valores.some((n) => n < 0 || n > 5)) return null;
+  return Math.round(valores.reduce((s, n) => s + n, 0) / 5 * 100) / 100;
+};
+const estudiantesCalificacionesVisibles = computed(() =>
+  estudianteCalificacionId.value
+    ? estudiantesCalificaciones.value.filter((e: any) => String(e.id) === String(estudianteCalificacionId.value))
+    : estudiantesCalificaciones.value
+);
+const cargasDocente = computed(() => cargasAcademicas.value.filter((c: any) =>
+  c.estado === 'activo' && c.puedeCalificar !== false &&
+  idSimple(c.docenteId) === String(usuario?._id || usuario?.id || auth.usuario?._id || '')
+));
+const gruposCalificables = computed(() => {
+  const mapa = new Map<string, any>();
+  cargasDocente.value.forEach((c: any) => {
+    const id = idSimple(c.grupoId);
+    const g = typeof c.grupoId === 'object' ? c.grupoId : grupos.value.find((x: any) => idDe(x) === id);
+    if (id && g) mapa.set(id, g);
+  });
+  return [...mapa.values()];
+});
+const asignaturasCalificables = computed(() => {
+  const mapa = new Map<string, any>();
+  cargasDocente.value.filter((c: any) => idSimple(c.grupoId) === grupoCalificacionesId.value).forEach((c: any) => {
+    const id = idSimple(c.asignaturaId);
+    const a = typeof c.asignaturaId === 'object' ? c.asignaturaId : asignaturas.value.find((x: any) => idDe(x) === id);
+    if (id && a) mapa.set(id, a);
+  });
+  return [...mapa.values()];
+});
+const cargaCalificacionesSeleccionada = computed(() => cargasDocente.value.find((c: any) =>
+  idSimple(c.grupoId) === grupoCalificacionesId.value && idSimple(c.asignaturaId) === asignaturaCalificacionesId.value
+));
+const cargarCargasCalificacion = async () => {
+  cargandoCargas.value = true;
+  errorCargas.value = '';
+  try {
+    const { data } = await api.get('/cargas-academicas');
+    cargasAcademicas.value = Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    cargasAcademicas.value = [];
+    errorCargas.value = error.response?.data?.mensaje || 'No fue posible consultar tus materias asignadas.';
+  } finally {
+    cargandoCargas.value = false;
+  }
+};
+const cambiarGrupoCalificaciones = async () => {
+  ++solicitudEstudiantes;
+  cargandoEstudiantesCalificaciones.value = false;
+  asignaturaCalificacionesId.value = '';
+  estudiantesCalificaciones.value = [];
+  estudianteCalificacionId.value = '';
+};
 
 const grupoAsistenciaId = ref("");
 const fechaAsistencia = ref(new Date().toISOString().slice(0, 10));
@@ -2488,11 +2555,17 @@ const normalizarEstudiantes = (datos: any, asumirEstudiante = false): any[] => {
   for (const original of lista) {
     if (!original || typeof original !== "object") continue;
     // Algunas APIs devuelven matrículas que contienen el usuario/estudiante anidado.
-    const item = original.estudiante || original.alumno || original.usuario || original;
+    // /api/matriculas devuelve la MATRÍCULA con el estudiante dentro de "estudianteId".
+    // Hay que usar el id del ESTUDIANTE (no el de la matrícula): si no, las notas se guardan
+    // a nombre de un id que no existe y el estudiante nunca las ve.
+    const refEstudiante = original.estudianteId;
+    const estudianteAnidado = refEstudiante && typeof refEstudiante === "object" ? refEstudiante : null;
+    const item = original.estudiante || original.alumno || estudianteAnidado || original.usuario || original;
     const rol = rolNormalizado(item) || rolNormalizado(original);
     const candidato = { ...original, ...item, rol: rol || item?.rol };
     if (!esEstudiante(candidato, asumirEstudiante)) continue;
-    const id = idDe(candidato) || idDe(original) || String(candidato.codigo || candidato.documento || nombrePersona(candidato));
+    const idEstudianteReal = refEstudiante ? String(estudianteAnidado ? (estudianteAnidado._id || estudianteAnidado.id || "") : refEstudiante) : "";
+    const id = idEstudianteReal || idDe(candidato) || idDe(original) || String(candidato.codigo || candidato.documento || nombrePersona(candidato));
     normalizados.push({ ...candidato, id, nombre: nombrePersona(candidato) });
   }
   return normalizados.filter((item, index, arr) => arr.findIndex((x) => String(x.id) === String(item.id)) === index);
@@ -2541,84 +2614,103 @@ const buscarEstudiantesGrupo = async (grupoId: string): Promise<any[]> => {
   return [];
 };
 
-const cargarEstudiantesParaCalificar = async () => {
-  estudiantesCalificaciones.value = [];
-  estudianteCalificacionId.value = "";
-  if (!grupoCalificacionesId.value) return;
-  const estudiantes = await buscarEstudiantesGrupo(grupoCalificacionesId.value);
-  if (!estudiantes.length) {
-    mostrarMensaje("No se encontraron estudiantes para este grupo. Comprueba que estén matriculados y que el backend exponga la lista de estudiantes del grupo.", "error");
+const idSimple = (v: any) => String(v && typeof v === "object" ? (v._id || v.id || "") : (v || ""));
+
+const mensajeDeRespuesta = async (respuesta: Response, porDefecto: string) => {
+  try {
+    const d = await respuesta.json();
+    return d?.mensaje || d?.error || porDefecto;
+  } catch {
+    return porDefecto;
   }
-  const guardadas = leerLocal("calificaciones");
-  estudiantesCalificaciones.value = estudiantes.map((estudiante: any) => {
-    const anterior = guardadas.find((item: any) =>
-      item.estudianteId === estudiante.id &&
-      item.grupoId === grupoCalificacionesId.value &&
-      item.asignaturaId === asignaturaCalificacionesId.value &&
-      Number(item.periodo) === Number(periodoCalificaciones.value)
-    );
-    return { ...estudiante, nota: anterior?.nota ?? null, observacion: anterior?.observacion || "" };
-  });
-  if (!estudiantesCalificaciones.value.some((e: any) => String(e.id) === String(estudianteCalificacionId.value))) {
-    estudianteCalificacionId.value = "";
+};
+
+// Esta lectura pasa por la URL de API real (Render/local), no por /api relativo a Vercel.
+const notasDelServidor = async (): Promise<any[]> => {
+  if (!cargaCalificacionesSeleccionada.value) return [];
+  const { data } = await api.get('/calificaciones', { params: {
+    grupoId: grupoCalificacionesId.value, asignaturaId: asignaturaCalificacionesId.value,
+    anioAcademicoId: idSimple(cargaCalificacionesSeleccionada.value.anioAcademicoId),
+    periodo: periodoCalificaciones.value,
+  }});
+  return Array.isArray(data) ? data : [];
+};
+
+let solicitudEstudiantes = 0;
+const cargarEstudiantesParaCalificar = async () => {
+  const solicitud = ++solicitudEstudiantes;
+  estudiantesCalificaciones.value = [];
+  estudianteCalificacionId.value = '';
+  cargandoEstudiantesCalificaciones.value = false;
+  if (!cargaCalificacionesSeleccionada.value) return;
+  cargandoEstudiantesCalificaciones.value = true;
+  try {
+    const [{ data: matriculas }, guardadas] = await Promise.all([
+      api.get('/matriculas', { params: { grupoId: grupoCalificacionesId.value,
+        anioAcademicoId: idSimple(cargaCalificacionesSeleccionada.value.anioAcademicoId), estado: 'activa' } }),
+      notasDelServidor(),
+    ]);
+    if (solicitud !== solicitudEstudiantes) return;
+    const estudiantes = normalizarEstudiantes(matriculas, true);
+    estudiantesCalificaciones.value = estudiantes.map((estudiante: any) => {
+      const anterior = guardadas.find((item: any) => idSimple(item.estudianteId) === String(estudiante.id));
+      return { ...estudiante, componentes: { ...componentesVacios(), ...(anterior?.componentes || {}) },
+        notaAnterior: anterior?.nota ?? null, observacion: anterior?.observacion || '' };
+    });
+  } catch (error: any) {
+    if (solicitud === solicitudEstudiantes) mostrarMensaje(error.response?.data?.mensaje || 'No se pudieron consultar las matrículas o calificaciones de este grupo.', 'error');
+  } finally {
+    if (solicitud === solicitudEstudiantes) cargandoEstudiantesCalificaciones.value = false;
   }
 };
 
 const guardarCalificaciones = async () => {
-  if (!grupoCalificacionesId.value || !asignaturaCalificacionesId.value) {
-    mostrarMensaje("Selecciona un grupo y una asignatura antes de guardar.", "error");
+  if (!cargaCalificacionesSeleccionada.value) {
+    mostrarMensaje('Selecciona una materia y un grupo de tu carga académica.', 'error');
     return;
   }
-  if (!estudiantesCalificaciones.value.length) {
-    mostrarMensaje("No hay estudiantes cargados para calificar en este grupo.", "error");
+  if (!estudiantesCalificacionesVisibles.value.length) {
+    mostrarMensaje('No hay estudiantes para calificar.', 'error');
     return;
   }
-  const invalidas = estudiantesCalificaciones.value.some((e: any) =>
-    e.nota !== null && e.nota !== "" && (Number(e.nota) < 0 || Number(e.nota) > 5)
+  const filas = estudiantesCalificacionesVisibles.value.filter((e: any) =>
+    camposCalificacion.some((c) => e.componentes[c] !== null && e.componentes[c] !== '' && e.componentes[c] !== undefined)
   );
-  if (invalidas) {
-    mostrarMensaje("Las calificaciones deben estar entre 0 y 5.", "error");
+  if (!filas.length) {
+    mostrarMensaje('Registra al menos un componente antes de guardar.', 'error');
     return;
   }
-
+  if (filas.some((e: any) => camposCalificacion.some((c) => {
+    const valor = e.componentes[c];
+    return valor !== null && valor !== '' && valor !== undefined && (!Number.isFinite(Number(valor)) || Number(valor) < 0 || Number(valor) > 5);
+  }))) {
+    mostrarMensaje('Cada componente debe ser un número entre 0 y 5.', 'error');
+    return;
+  }
   guardandoCalificaciones.value = true;
-  const actuales = leerLocal("calificaciones");
-  const token = obtenerToken();
-  const payload = estudiantesCalificacionesVisibles.value.map((e: any) => ({
-    estudianteId: e.id,
-    estudianteNombre: e.nombre,
-    docenteId: usuario?.id || usuario?._id,
-    grupoId: grupoCalificacionesId.value,
-    asignaturaId: asignaturaCalificacionesId.value,
-    periodo: periodoCalificaciones.value,
-    nota: e.nota === "" ? null : e.nota,
-    observacion: e.observacion || "",
-    actualizadoEn: new Date().toISOString(),
-  }));
-  const fusionadas = [...actuales];
-  payload.forEach((item: any) => {
-    const index = fusionadas.findIndex((prev: any) =>
-      prev.estudianteId === item.estudianteId && prev.grupoId === item.grupoId &&
-      prev.asignaturaId === item.asignaturaId && Number(prev.periodo) === Number(item.periodo)
-    );
-    if (index >= 0) fusionadas[index] = item;
-    else fusionadas.push(item);
-  });
-
   try {
-    let respuestaOk = false;
-    if (token) {
+    const anteriores = await notasDelServidor();
+    const anioAcademicoId = idSimple(cargaCalificacionesSeleccionada.value.anioAcademicoId);
+    let guardadas = 0;
+    const fallos: string[] = [];
+    for (const e of filas) {
+      const previa = anteriores.find((n: any) => idSimple(n.estudianteId) === String(e.id));
+      const cuerpo = { componentes: e.componentes, observacion: e.observacion || '' };
       try {
-        const respuesta = await fetch("/api/calificaciones", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ calificaciones: payload }),
-        });
-        respuestaOk = respuesta.ok;
-      } catch { /* Se conserva en local si la API no responde. */ }
+        if (previa) await api.put(`/calificaciones/${previa._id}`, cuerpo);
+        else await api.post('/calificaciones', { ...cuerpo, estudianteId: e.id,
+          asignaturaId: asignaturaCalificacionesId.value, grupoId: grupoCalificacionesId.value,
+          anioAcademicoId, periodo: periodoCalificaciones.value });
+        guardadas++;
+      } catch (error: any) {
+        fallos.push(`${e.nombre}: ${error.response?.data?.mensaje || 'no se pudo guardar'}`);
+      }
     }
-    guardarLocal("calificaciones", fusionadas);
-    mostrarMensaje(respuestaOk ? "Calificaciones enviadas al servidor y guardadas." : "Calificaciones guardadas en este navegador. Verifica la conexión del backend para sincronizarlas.", "exito");
+    if (fallos.length) mostrarMensaje(`Guardadas ${guardadas} evaluaciones; ${fallos.length} fallaron. ${fallos[0]}`, 'error');
+    else mostrarMensaje(`${guardadas} evaluación(es) guardadas. Las definitivas completas ya están disponibles para el estudiante.`, 'exito');
+    if (guardadas) await cargarEstudiantesParaCalificar();
+  } catch (error: any) {
+    mostrarMensaje(error.response?.data?.mensaje || 'No se pudieron consultar las calificaciones anteriores.', 'error');
   } finally {
     guardandoCalificaciones.value = false;
   }
@@ -2689,11 +2781,19 @@ const cargarObservaciones = async () => {
   const token = obtenerToken();
   if (!token) return;
   try {
-    const respuesta = await fetch("/api/observaciones", { headers: { Authorization: `Bearer ${token}` } });
+    const respuesta = await fetch("/api/observador", { headers: { Authorization: `Bearer ${token}` } });
     if (!respuesta.ok) return;
     const datos = await respuesta.json();
     const lista = Array.isArray(datos) ? datos : datos?.observaciones || datos?.data || [];
-    if (lista.length) observaciones.value = lista.map((o: any) => ({ ...o, id: idDe(o) || o.id || `${Date.now()}-${Math.random()}` }));
+    const miId = String(usuario?.id || usuario?._id || "");
+    observaciones.value = lista
+      .filter((o: any) => !miId || idSimple(o.docenteId) === miId)
+      .map((o: any) => ({
+        ...o,
+        id: idDe(o) || o.id || `${Date.now()}-${Math.random()}`,
+        estudianteNombre: o.estudianteNombre || [o.estudianteId?.nombres, o.estudianteId?.apellidos].filter(Boolean).join(" ") || "Estudiante",
+        fecha: String(o.fecha || "").slice(0, 10),
+      }));
   } catch { /* se usan registros locales */ }
 };
 
@@ -2716,12 +2816,29 @@ const crearObservacion = async () => {
   const token = obtenerToken();
   if (token) {
     try {
-      const respuesta = await fetch("/api/observaciones", {
+      const grupoElegido = grupos.value.find((g: any) => idDe(g) === form.grupoId);
+      const tipoBackend: Record<string, string> = { academica: "academico", convivencia: "convivencia", positiva: "convivencia", seguimiento: "academico" };
+      const etiqueta = form.tipo === "positiva" ? "[Positiva] " : form.tipo === "seguimiento" ? "[Seguimiento] " : "";
+      const respuesta = await fetch("/api/observador", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(item),
+        body: JSON.stringify({
+          anioAcademicoId: idSimple(grupoElegido?.anioAcademicoId),
+          estudianteId: form.estudianteId,
+          tipo: tipoBackend[form.tipo] || "academico",
+          fecha: form.fecha,
+          descripcion: `${etiqueta}${item.descripcion}`,
+          docenteId: usuario?.id || usuario?._id,
+        }),
       });
       remoto = respuesta.ok;
-    } catch { /* respaldo local */ }
+      if (!remoto) {
+        mostrarMensaje(await mensajeDeRespuesta(respuesta, "No se pudo guardar la observación en el servidor."), "error");
+        return;
+      }
+    } catch {
+      mostrarMensaje("No hay conexión con el servidor: la observación no se guardó.", "error");
+      return;
+    }
   }
   observaciones.value.unshift(item);
   guardarLocal("observaciones", observaciones.value);
@@ -2736,7 +2853,7 @@ const eliminarObservacion = async (id: string) => {
   guardarLocal("observaciones", observaciones.value);
   const token = obtenerToken();
   if (token) {
-    try { await fetch(`/api/observaciones/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
+    try { await fetch(`/api/observador/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); } catch { /* eliminación local */ }
   }
   mostrarMensaje("Observación eliminada de la lista.", "exito");
 };
@@ -2825,6 +2942,7 @@ const guardarPerfil = async () => {
       } catch { /* se conserva localmente */ }
     }
     localStorage.setItem("usuario", JSON.stringify(actualizado));
+    auth.usuario = actualizado;
     mostrarMensaje(remoto ? "Perfil actualizado en el servidor." : "Perfil actualizado en este navegador. Verifica el backend para sincronizarlo.", "exito");
   } finally {
     guardandoPerfil.value = false;
@@ -2836,6 +2954,7 @@ const guardarPerfil = async () => {
 ========================================================= */
 
 cargarDatosActividad();
+cargarCargasCalificacion();
 cargarActividades();
 cargarComunicados();
 cargarObservaciones();
@@ -2846,15 +2965,9 @@ cargarHorarios();
 ========================================================= */
 
 const cerrarSesion = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem(
-    "usuario"
-  );
-  localStorage.removeItem(
-    "tipoPerfil"
-  );
-
-  router.push("/");
+  auth.cerrarSesion();
+  localStorage.removeItem("tipoPerfil");
+  router.replace("/login");
 };
 </script>
 
@@ -2897,7 +3010,7 @@ const cerrarSesion = () => {
   display: flex;
   flex-direction: column;
 
-  background: #173f9f;
+  background: linear-gradient(180deg, #1e40af 0%, #1d4ed8 100%);
   color: white;
 
   z-index: 10;
@@ -2926,7 +3039,7 @@ const cerrarSesion = () => {
   border-radius: 11px;
 
   background: white;
-  color: #173f9f;
+  color: #1d4ed8;
 
   font-size: 23px;
   font-weight: 800;
@@ -3001,7 +3114,7 @@ const cerrarSesion = () => {
 
 .menu-item.active {
   background: white;
-  color: #173f9f;
+  color: #1d4ed8;
   font-weight: 700;
 }
 
@@ -3203,7 +3316,7 @@ const cerrarSesion = () => {
 .topbar h1 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 25px;
   font-weight: 800;
@@ -3227,7 +3340,7 @@ const cerrarSesion = () => {
   border-radius: 50%;
 
   background: #dbe6ff;
-  color: #173f9f;
+  color: #1d4ed8;
 
   font-size: 13px;
   font-weight: 800;
@@ -3236,7 +3349,7 @@ const cerrarSesion = () => {
 .profile-info strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
 }
@@ -3270,7 +3383,7 @@ const cerrarSesion = () => {
 .section-title h2 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 22px;
 }
@@ -3301,7 +3414,7 @@ const cerrarSesion = () => {
   background:
     linear-gradient(
       135deg,
-      #173f9f,
+      #1d4ed8,
       #3861d0
     );
 
@@ -3416,7 +3529,7 @@ const cerrarSesion = () => {
 
   margin-top: 3px;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 25px;
 }
@@ -3468,7 +3581,7 @@ const cerrarSesion = () => {
 .panel-header h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3528,7 +3641,7 @@ const cerrarSesion = () => {
 .empty-state h4 {
   margin: 0;
 
-  color: #374151;
+  color: #1d4ed8;
 
   font-size: 14px;
 }
@@ -3699,7 +3812,7 @@ const cerrarSesion = () => {
   border-radius: 50%;
 
   background: #dbe6ff;
-  color: #173f9f;
+  color: #1d4ed8;
 
   font-size: 22px;
   font-weight: 800;
@@ -3727,7 +3840,7 @@ const cerrarSesion = () => {
 }
 
 .profile-data strong {
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
 }
@@ -3771,7 +3884,7 @@ const cerrarSesion = () => {
   border-radius: 9px;
 
   background: #e5edff;
-  color: #3861d0;
+  color: #1d4ed8;
 }
 
 .activity-content {
@@ -3781,7 +3894,7 @@ const cerrarSesion = () => {
 .activity-content h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3899,7 +4012,7 @@ const cerrarSesion = () => {
 .communication-title h3 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 15px;
 }
@@ -3920,7 +4033,7 @@ const cerrarSesion = () => {
   border-radius: 5px;
 
   background: #eef2ff;
-  color: #3861d0;
+  color: #1d4ed8;
 
   font-size: 9px;
   font-weight: 700;
@@ -3978,7 +4091,7 @@ const cerrarSesion = () => {
 .recent-item strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 12px;
 }
@@ -4050,7 +4163,7 @@ const cerrarSesion = () => {
 .modal-header h2 {
   margin: 0;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 19px;
 }
@@ -4072,7 +4185,7 @@ const cerrarSesion = () => {
 
   background: #f3f4f6;
 
-  color: #374151;
+  color: #1d4ed8;
 
   font-size: 23px;
 
@@ -4212,7 +4325,7 @@ const cerrarSesion = () => {
 .notification-content strong {
   display: block;
 
-  color: #111827;
+  color: #1d4ed8;
 
   font-size: 13px;
   font-weight: 800;
@@ -4259,7 +4372,7 @@ const cerrarSesion = () => {
 .notification-close:hover {
   background: #f3f4f6;
 
-  color: #374151;
+  color: #1d4ed8;
 }
 
 .notificacion-enter-active,
@@ -4413,7 +4526,7 @@ const cerrarSesion = () => {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  color: #374151;
+  color: #1d4ed8;
   font-size: 12px;
 }
 
@@ -4441,14 +4554,14 @@ const cerrarSesion = () => {
   border: 1px solid #d1d5db;
   border-radius: 7px;
   background: white;
-  color: #111827;
+  color: #1d4ed8;
   font-family: inherit;
   font-size: 12px;
 }
 
 .table-input:focus {
   outline: none;
-  border-color: #3861d0;
+  border-color: #1d4ed8;
 }
 
 .inline-form-panel {
@@ -4494,6 +4607,24 @@ const cerrarSesion = () => {
     padding: 10px 8px;
   }
 }
+
+/* Misma paleta institucional que el portal de Secretaría. */
+.profile-dropdown-wrap { position: relative; z-index: 30; }
+.profile-trigger { border: 0; background: transparent; text-align: left; cursor: pointer; padding: 8px 10px; border-radius: 10px; color: #1d4ed8; }
+.profile-trigger:hover, .profile-trigger:focus-visible { background: #eff6ff; outline-offset: 2px; }
+.profile-dropdown { position: absolute; top: calc(100% + 7px); right: 0; min-width: 190px; background: #fff; border: 1px solid #dbe3ef; border-radius: 12px; box-shadow: 0 12px 28px rgba(15, 23, 42, .13); padding: 7px; }
+.profile-dropdown button { width: 100%; padding: 11px 13px; display: flex; align-items: center; gap: 10px; text-align: left; color: #1e40af; border: 0; background: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.profile-dropdown button:hover { background: #eff6ff; }
+.grade-instructions { margin: 0 0 18px; padding: 12px 15px; border-radius: 10px; background: #eff6ff; color: #1e40af; font-size: 13px; }
+.grade-info, .grade-error { margin: 10px 0; padding: 12px 14px; border-radius: 9px; font-size: 13px; }
+.grade-info { background: #f1f5f9; color: #475569; }
+.grade-error { background: #fef2f2; color: #b91c1c; }
+.grade-table-wrap { overflow-x: auto; }
+.grade-table { min-width: 1060px; }
+.grade-table th small { font-size: 11px; font-weight: 500; }
+.grade-student { min-width: 150px; font-weight: 600; }
+.grade-number { width: 88px; min-width: 78px; }
+.grade-observation { width: 175px; }
+.grade-total { font-weight: 700; color: #1d4ed8; min-width: 95px; }
+.grade-total span { color: #64748b; font-size: 12px; font-weight: 500; }
 </style>
-
-
